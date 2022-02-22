@@ -58,19 +58,6 @@ class FPN(nn.Module):
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
 
-        # Top layer
-        self.toplayer = nn.Conv2d(2048, 256, kernel_size=1, stride=1, padding=0)  # Reduce channels
-
-        # Smooth layers
-        self.smooth1 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
-        self.smooth2 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
-        self.smooth3 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
-
-        # Lateral layers
-        self.latlayer1 = nn.Conv2d(1024, 256, kernel_size=1, stride=1, padding=0)
-        self.latlayer2 = nn.Conv2d( 512, 256, kernel_size=1, stride=1, padding=0)
-        self.latlayer3 = nn.Conv2d( 256, 256, kernel_size=1, stride=1, padding=0)
-
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
@@ -87,10 +74,6 @@ class FPN(nn.Module):
             layers.append(block(self.inplanes, planes))
 
         return nn.Sequential(*layers)
-
-    def _up_sample_add(self, x, y):
-        _,_,H,W = y.size()
-        return F.upsample(x, size=(H,W), mode='bilinear') + y
     
     def forward(self, x):
         # Bottom-up
@@ -100,13 +83,7 @@ class FPN(nn.Module):
         c4 = self.layer3(c3)
         c5 = self.layer4(c4)
         
-        # Top-down
-        p5 = self.toplayer(c5)
-        p4 = self.smooth1(self._up_sample_add(p5, self.latlayer1(c4)))
-        p3 = self.smooth2(self._up_sample_add(p4, self.latlayer2(c3)))
-        p2 = self.smooth3(self._up_sample_add(p3, self.latlayer3(c2)))
-
-        return p2, p3, p4, p5
+        return c2, c3, c4, c5
 
 
 def FPN18():
