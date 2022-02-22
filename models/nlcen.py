@@ -1,3 +1,4 @@
+from matplotlib.pyplot import axis
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
@@ -24,10 +25,10 @@ class Network(nn.Module):
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
 
         # NLCE modules
-        self.nlce2 = NLCE(C_in=256)
-        self.nlce3 = NLCE(C_in=512)
-        self.nlce4 = NLCE(C_in=1024)
-        self.nlce5 = NLCE(C_in=2048)
+        self.nlce2 = NLCE(C_in=256, C1=128)
+        self.nlce3 = NLCE(C_in=512, C1=128)
+        self.nlce4 = NLCE(C_in=1024, C1=128)
+        self.nlce5 = NLCE(C_in=2048, C1=128)
 
         # Lateral layers
         self.latlayer2 = nn.Conv2d( 256, 256, kernel_size=1, stride=1, padding=0)
@@ -42,11 +43,19 @@ class Network(nn.Module):
         self.smooth5 = nn.Conv2d(256, 1, kernel_size=3, stride=1, padding=1)
 
         # Bottleneck operations
+        self.bottle3 = self._make_bottleneck(256, 1)
+        self.bottle4 = self._make_bottleneck(256, 2)
+        self.bottle5 = self._make_bottleneck(256, 3)
+        self.bottle = nn.Conv2d(480, 1, kernel_size=1)
 
-    def _make_bottleneck(self, block, times):
+    def _make_bottleneck(self, channel_in, times):
         layers = []
-
-
+        c = channel_in
+        for _ in range(times):
+            layers.append(nn.Conv2d(c, c//2, kernel_size=1))
+            c //= 2
+        
+        return nn.Sequential(*layers)
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
@@ -97,10 +106,11 @@ class Network(nn.Module):
         p2_s = self.F.upsample(self.smooth2(p2), size=(H, W), mode='bilinear')
 
         # Bottleneck operations
+        p3 = self.bottle3(p3)
+        p4 = self.bottle4(p4)
+        p5 = self.bottle5(p5)
 
+        out = torch.cat((p2, p3, p4, p5), dim=1)
+        out = self.bottle(out)
         
-        
-        return p2, p3, p4, p5
-
-
-
+        return out, p2_s, p3_s, p4_s, p5_s
