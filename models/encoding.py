@@ -15,7 +15,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.nn.modules.utils import _pair
 
-from  import scaled_l2, aggregate, pairwise_cosine
+from functions.encoder import scaled_l2, aggregate, pairwise_cosine
 
 __all__ = ['Encoding', 'EncodingDrop', 'Inspiration', 'UpsampleConv2d',
            'EncodingCosine']

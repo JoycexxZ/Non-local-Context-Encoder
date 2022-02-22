@@ -1,11 +1,10 @@
-from fpn import FPN18, FPN50, FPN101
-from models.fpn import Bottleneck
-from nlce import NLCE
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
 
-from models.nlce import NLCE
+from nlce import NLCE
+from resnet import Bottleneck, BasicBlock
+
 
 class Network(nn.Module):
     def __init__(self, block, num_blocks):
@@ -24,6 +23,12 @@ class Network(nn.Module):
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
 
+        # NLCE modules
+        self.nlce2 = NLCE(C_in=256)
+        self.nlce3 = NLCE(C_in=512)
+        self.nlce4 = NLCE(C_in=1024)
+        self.nlce5 = NLCE(C_in=2048)
+
         # Lateral layers
         self.latlayer2 = nn.Conv2d( 256, 256, kernel_size=1, stride=1, padding=0)
         self.latlayer3 = nn.Conv2d( 512, 256, kernel_size=1, stride=1, padding=0)
@@ -31,10 +36,16 @@ class Network(nn.Module):
         self.latlayer5 = nn.Conv2d(2048, 256, kernel_size=1, stride=1, padding=0)
 
         # Smooth layers
-        self.smooth2 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
-        self.smooth3 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
-        self.smooth4 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
-        self.smooth5 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
+        self.smooth2 = nn.Conv2d(256, 1, kernel_size=3, stride=1, padding=1)
+        self.smooth3 = nn.Conv2d(256, 1, kernel_size=3, stride=1, padding=1)
+        self.smooth4 = nn.Conv2d(256, 1, kernel_size=3, stride=1, padding=1)
+        self.smooth5 = nn.Conv2d(256, 1, kernel_size=3, stride=1, padding=1)
+
+        # Bottleneck operations
+
+    def _make_bottleneck(self, block, times):
+        layers = []
+
 
 
     def _make_layer(self, block, planes, blocks, stride=1):
@@ -59,6 +70,7 @@ class Network(nn.Module):
         return F.upsample(x, size=(H, W), mode='bilinear') + y
 
     def forward(self, x):
+        _, _, H, W = x.size()
         # Bottom-up
         c1 = self.maxpool(self.relu(self.bn1(self.conv1(x))))
         c2 = self.layer1(c1)
@@ -67,10 +79,10 @@ class Network(nn.Module):
         c5 = self.layer4(c4)
 
         # NLCE modules
-        e2 = NLCE(c2)
-        e3 = NLCE(c3)
-        e4 = NLCE(c4)
-        e5 = NLCE(c5)
+        e2 = self.nlce2(c2)
+        e3 = self.nlce3(c3)
+        e4 = self.nlce4(c4)
+        e5 = self.nlce5(c5)
 
         # Top-down
         p5 = self.latlayer5(e5)
@@ -79,10 +91,13 @@ class Network(nn.Module):
         p2 = self._upsample_add(p3, self.latlayer2(e2))
 
         # Segmentation from feature maps
-        p5_s = self.smooth5(p5)
-        p4_s = self.smooth4(p4)
-        p3_s = self.smooth3(p3)
-        p2_s = self.smooth2(p2)
+        p5_s = self.F.upsample(self.smooth5(p5), size=(H, W), mode='bilinear')
+        p4_s = self.F.upsample(self.smooth4(p4), size=(H, W), mode='bilinear')
+        p3_s = self.F.upsample(self.smooth3(p3), size=(H, W), mode='bilinear')
+        p2_s = self.F.upsample(self.smooth2(p2), size=(H, W), mode='bilinear')
+
+        # Bottleneck operations
+
         
         
         return p2, p3, p4, p5
