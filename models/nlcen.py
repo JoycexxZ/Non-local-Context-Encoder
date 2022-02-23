@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 
-from nlce import NLCE
-from resnet import Bottleneck, BasicBlock
+from models.nlce import NLCE
+from models.resnet import Bottleneck, BasicBlock
 
 
 class Network(nn.Module):
@@ -67,18 +67,18 @@ class Network(nn.Module):
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
-        if stride != 1 or self.inplanes != planes * block.expansion:
+        if stride != 1 or self.in_planes != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion,
+                nn.Conv2d(self.in_planes, planes * block.expansion,
                           kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(planes * block.expansion),
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
+        layers.append(block(self.in_planes, planes, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes))
+            layers.append(block(self.in_planes, planes))
 
         return nn.Sequential(*layers)
 

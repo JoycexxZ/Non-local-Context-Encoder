@@ -32,8 +32,6 @@ def get_data_ISBI(data_path, mask_path, name):
     image = Image.open(data_path)
     mask_path = os.path.join(mask_path, name+"_Segmentation.png")
     mask = Image.open(mask_path)
-    mask = np.minimum(mask, 1)
-    mask = Image.fromarray(mask) 
 
     return image, mask
 
@@ -52,4 +50,5 @@ def reshape_image(image, image_size):
     return image
 
 def norm_JPCL(image):
-    return image/4096
+    max_pixel = image.max()
+    return image/max_pixel

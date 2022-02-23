@@ -2,16 +2,14 @@ import time
 import sys
 import os
 
-def message(config, strings: list, time_stamp=True):
+def message(config, string, time_stamp=True):
     t = time.localtime()
     if time_stamp:
         prefix = f"[{str(t.tm_hour).zfill(2)}:{str(t.tm_min).zfill(2)}:{str(t.tm_sec).zfill(2)}] "
     else:
         prefix = " "*11
 
-    message = ""
-    for string in strings:
-        message += (prefix + string + '\n')
+    message = prefix + string + '\n'
 
     _print(config, message)
     
@@ -29,6 +27,8 @@ def config_init(config):
         config.results_dir = results_dir
 
     _print(config, config)
+    _print(config, "\n")
+    line(config)
 
     return config
 

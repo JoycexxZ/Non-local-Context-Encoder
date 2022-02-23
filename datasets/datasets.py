@@ -12,9 +12,7 @@ class GeneralDataset(Dataset):
         super(GeneralDataset, self).__init__()
         self.config = config
         self.dataset = config.dataset
-        self.transform = transforms
-
-        
+        self.transform = transforms        
         self.filenames = utils.get_filenames(config.data_path)
 
     def __len__(self):
@@ -25,25 +23,18 @@ class GeneralDataset(Dataset):
         if self.dataset == "JPCL":
             image, mask = utils.get_data_JPCL(self.config.data_path, self.config.mask_path, name)
             image = utils.norm_JPCL(image)
+            image = np.resize(image, (1, 256, 256)).astype('float32')
+            mask = np.resize(mask, (1, 256, 256)).astype('float32')
         elif self.dataset == "ISBI":
             image, mask = utils.get_data_ISBI(self.config.data_path, self.config.mask_path, name)
-
-
-        #image = torch.from_numpy(image.astype(np.float32) / max_pixel).contiguous()
-        #mask = torch.from_numpy(mask.astype(np.float32)).unsqueeze(0).contiguous()
-
-        if self.transform and self.dataset == "ISBI":
-            image = self.transform(image)
-            mask = self.transform(mask)
-
-        if self.dataset == "JPCL":
-            image = np.resize(image, (1,256, 256))
-            mask = np.resize(mask, (1,256, 256))
+            if self.transform:
+                image = self.transform(image)
+                mask = self.transform(mask)
 
         return image, mask
 
 
-def get_training_set(config, batch_size, num_workers):
+def get_training_loader(config, batch_size, num_workers):
     transformed_train = GeneralDataset(config, transforms = transforms.Compose([
                                             transforms.Resize(256),
                                             transforms.CenterCrop(256),
@@ -56,7 +47,7 @@ def get_training_set(config, batch_size, num_workers):
     dataloader_train = DataLoader(transformed_train, batch_size, shuffle=True, num_workers=num_workers)
     return dataloader_train
 
-def get_testing_set(config, batch_size, num_workers):
+def get_testing_loader(config, batch_size, num_workers):
     transformed_test = GeneralDataset(config, transforms = transforms.Compose([transforms.ToTensor()]))
     dataloader_test = DataLoader(transformed_test, batch_size, shuffle=True, num_workers=num_workers)
 

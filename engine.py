@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import cudnn
+from torch.backends import cudnn
 from models.nlcen import *
 from datasets.datasets import *
 from models.loss import *

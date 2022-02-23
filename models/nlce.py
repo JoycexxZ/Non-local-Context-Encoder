@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
-from encoding import Encoding
+from  models.encoding import Encoding
 
 class NLCE(nn.Module):
     def __init__(self, C_in):
