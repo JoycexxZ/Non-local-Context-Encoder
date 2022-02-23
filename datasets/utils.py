@@ -29,10 +29,11 @@ def get_data_JPCL(data_path, mask_path, name):
     
 def get_data_ISBI(data_path, mask_path, name):
     data_path = os.path.join(data_path, name+".jpg")
-    image = np.array(Image.open(data_path).ToTensor())
+    image = Image.open(data_path)
     mask_path = os.path.join(mask_path, name+"_Segmentation.png")
-    mask = np.array(Image.open(mask_path))
+    mask = Image.open(mask_path)
     mask = np.minimum(mask, 1)
+    mask = Image.fromarray(mask) 
 
     return image, mask
 
@@ -49,3 +50,6 @@ def reshape_image(image, image_size):
 
     image = cv2.resize(image, (image_size, image_size))
     return image
+
+def norm_JPCL(image):
+    return image/4096
