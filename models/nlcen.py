@@ -25,10 +25,10 @@ class Network(nn.Module):
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
 
         # NLCE modules
-        self.nlce2 = NLCE(C_in=256, C1=128)
-        self.nlce3 = NLCE(C_in=512, C1=128)
-        self.nlce4 = NLCE(C_in=1024, C1=128)
-        self.nlce5 = NLCE(C_in=2048, C1=128)
+        self.nlce2 = NLCE(C_in=256)
+        self.nlce3 = NLCE(C_in=512)
+        self.nlce4 = NLCE(C_in=1024)
+        self.nlce5 = NLCE(C_in=2048)
 
         # Lateral layers
         self.latlayer2 = nn.Conv2d( 256, 256, kernel_size=1, stride=1, padding=0)
@@ -43,17 +43,25 @@ class Network(nn.Module):
         self.smooth5 = nn.Conv2d(256, 1, kernel_size=3, stride=1, padding=1)
 
         # Bottleneck operations
-        self.bottle3 = self._make_bottleneck(256, 1)
-        self.bottle4 = self._make_bottleneck(256, 2)
-        self.bottle5 = self._make_bottleneck(256, 3)
-        self.bottle = nn.Conv2d(480, 1, kernel_size=1)
+        self.bottle2 = self._make_bottleneck(64)
+        self.bottle3 = self._make_bottleneck(32)
+        self.bottle4 = self._make_bottleneck(16)
+        self.bottle5 = self._make_bottleneck(8)
+        self.bottle = nn.Conv2d(4, 1, kernel_size=1)
 
-    def _make_bottleneck(self, channel_in, times):
+    def _make_bottleneck(self, size_in):
+        channels = [128, 64, 32, 1]
         layers = []
-        c = channel_in
-        for _ in range(times):
-            layers.append(nn.Conv2d(c, c//2, kernel_size=1))
-            c //= 2
+        s = size_in
+        
+        for channel in channels:
+            layers.append(nn.Conv2d(channel*2, channel, kernel_size=1))
+            if s < 256:
+                layers.append(nn.Upsample(scale_factor=2, mode='bilinear'))
+                s //= 2
+        
+        if s < 256:
+            layers.append(nn.Upsample(size=(256, 256), mode='bilinear'))
         
         return nn.Sequential(*layers)
 
@@ -94,23 +102,18 @@ class Network(nn.Module):
         e5 = self.nlce5(c5)
 
         # Top-down
-        p5 = self.latlayer5(e5)
-        p4 = self._upsample_add(p5, self.latlayer4(e4))
-        p3 = self._upsample_add(p4, self.latlayer3(e3))
-        p2 = self._upsample_add(p3, self.latlayer2(e2))
-
-        # Segmentation from feature maps
-        p5_s = self.F.upsample(self.smooth5(p5), size=(H, W), mode='bilinear')
-        p4_s = self.F.upsample(self.smooth4(p4), size=(H, W), mode='bilinear')
-        p3_s = self.F.upsample(self.smooth3(p3), size=(H, W), mode='bilinear')
-        p2_s = self.F.upsample(self.smooth2(p2), size=(H, W), mode='bilinear')
+        p5 = self.smooth5(self.latlayer5(e5))
+        p4 = self.smooth4(self._upsample_add(p5, self.latlayer4(e4)))
+        p3 = self.smooth3(self._upsample_add(p4, self.latlayer3(e3)))
+        p2 = self.smooth2(self._upsample_add(p3, self.latlayer2(e2)))
 
         # Bottleneck operations
-        p3 = self.bottle3(p3)
-        p4 = self.bottle4(p4)
-        p5 = self.bottle5(p5)
+        p5_s = self.bottle5(p5)
+        p4_s = self.bottle4(p4)
+        p3_s = self.bottle3(p3)
+        p2_s = self.bottle2(p2)
 
-        out = torch.cat((p2, p3, p4, p5), dim=1)
+        out = self.bottle(torch.cat((p2_s, p3_s, p4_s, p5_s), 1))
         out = self.bottle(out)
         
         return out, p2_s, p3_s, p4_s, p5_s
