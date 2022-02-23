@@ -5,16 +5,21 @@ import torch
 from encoding import Encoding
 
 class NLCE(nn.Module):
-    def __init__(self, C_in, C1, D=128, K=32):
+    def __init__(self, C_in):
         super(NLCE, self).__init__()
-        self.D, self.K, self.C1, self.C_in= D, K, C1, C_in
+
+        self.C_in = C_in
+        self.C1 = C_in // 2
+        self.D = self.C1
+        self.K = self.D // 4
+
         self.encoder = Encoding(self.D, self.K)
         self.conv1_theta = nn.Conv2d(C_in, self.C1, 1)
         self.conv1_phi = nn.Conv2d(C_in, self.C1, 1)
         self.conv1_g = nn.Conv2d(C_in, self.C1, 1)
         self.conv2 = nn.Conv2d(self.C1, C_in, 1)
         self.conv3 = nn.Conv2d(C_in, self.D, 1)
-        self.fc = nn.Linear(D, C_in)
+        self.fc = nn.Linear(self.D, C_in)
 
 
     def forward(self, X):
