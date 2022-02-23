@@ -33,8 +33,8 @@ class GeneralDataset(Dataset):
         return image, mask
 
 
-def get_training_set(config, batch_size, num_workers):
+def get_training_loader(config, batch_size, num_workers):
     pass
 
-def get_testing_set(config, batch_size, num_workers):
+def get_testing_loader(config, batch_size, num_workers):
     pass

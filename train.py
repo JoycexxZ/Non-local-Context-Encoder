@@ -2,6 +2,7 @@ import argparse
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    
     # Datasets
     parser.add_argument('--data_path', type=str, default='datasets/JPCL/images/')
     parser.add_argument('--mask_path', type=str, default='datasets/JPCL/masks/')
@@ -19,3 +20,6 @@ if __name__ == "__main__":
     parser.add_argument('--weight_decay', type=float, default=1e-4)
     parser.add_argument('--first_momentum', type=float, default=0.9)
     parser.add_argument('--second_momentum', type=float, default=0.999)
+
+    # Other parameters
+    parser.add_argument('--lamb', type=float, default=0.25)

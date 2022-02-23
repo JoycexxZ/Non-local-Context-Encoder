@@ -114,3 +114,16 @@ class Network(nn.Module):
         out = self.bottle(out)
         
         return out, p2_s, p3_s, p4_s, p5_s
+
+
+def Network_ResNet18():
+    return Network(BasicBlock, [2, 2, 2, 2])
+
+def Network_ResNet34():
+    return Network(BasicBlock, [3, 4, 6, 3])
+
+def Network_ResNet50():
+    return Network(Bottleneck, [3, 4, 6, 3])
+
+def Network_ResNet101():
+    return Network(Bottleneck, [3, 4, 23, 3])
