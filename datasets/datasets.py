@@ -1,8 +1,10 @@
+#from random import random
 from cv2 import transform
 from sklearn.ensemble import GradientBoostingClassifier
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import torch
+import random
 from datasets import utils
 from torchvision import transforms
 
@@ -30,8 +32,12 @@ class GeneralDataset(Dataset):
         elif self.dataset == "ISBI":
             image, mask = utils.get_data_ISBI(self.config.data_path, self.config.mask_path, name)
             if self.transform:
+                seed = np.random.randint(1145141449)
+                random.seed(seed)
                 image = self.transform(image)
+                random.seed(seed)
                 mask = self.transform(mask)
+                mask = mask.reshape((256, 256))
 
         return image, mask
 
