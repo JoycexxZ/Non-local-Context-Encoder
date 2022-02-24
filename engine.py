@@ -7,11 +7,25 @@ from models.nlcen import *
 from datasets.datasets import *
 from models.loss import *
 from utils import *
+import logging
 
 
 class Engine():
     def __init__(self, config):
-        self.config = config
+        self.config = config_init(config)
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        fh = logging.FileHandler(config.log_path)
+        fh.setLevel(logging.INFO)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(filename)-8s: %(message)s',
+                                      datefmt="[%Y-%m-%d %H:%M:%S]")
+        fh.setFormatter(formatter)
+        ch.setFormatter(formatter)
+        logger.addHandler(fh)
+        logger.addHandler(ch)
+        logging.info('config: ' + str(config) + '\n')
 
     def _adjust_learning_rate(self, optimizer, lr):
         if lr > 1e-4:
@@ -26,7 +40,7 @@ class Engine():
         elif self.config.dataset == 'JPCL':
             model = Network_channel1()
 
-        print(model)
+        logging.info('Current model:\n' + str(model) + '\n')
         self.config = config_init(self.config)
 
         if torch.cuda.device_count() == 8:
@@ -46,7 +60,8 @@ class Engine():
         dataloader = get_training_loader(self.config, self.config.batch_size, self.config.num_workers)
 
         for epoch in range(1, self.config.epochs+1):
-            message(self.config, 'starting epoch {}...'.format(epoch))
+            logging.info('starting epoch {}...'.format(epoch))
+            # message(self.config, 'starting epoch {}...'.format(epoch))
             for i, (image, mask) in enumerate(dataloader):
                 image = image.cuda()
                 mask = mask.cuda()
@@ -63,7 +78,8 @@ class Engine():
                 optimizer.step()
 
                 if i % 100 == 0:
-                    message(self.config, '[%d/%d] Loss: %.10f' % (i, len(dataloader), loss.item()))
+                    logging.info('[%d/%d] Loss: %.10f' % (i, len(dataloader), loss.item()))
+                    # message(self.config, '[%d/%d] Loss: %.10f' % (i, len(dataloader), loss.item()))
 
             lr = self._adjust_learning_rate(optimizer, lr)
             if epoch % 20 == 0 and self.config.out_to_folder == 'True':
@@ -94,24 +110,28 @@ class Engine():
 
         dataloader = get_testing_loader(self.config, self.config.batch_size, self.config.num_workers)
 
-        message(self.config, 'starting testing...')
+        # message(self.config, 'starting testing...')
+        logging.info('starting testing...')
         errors = {'DIC': 0, 'JSC': 0}
+        count = 0
         for i, (image, mask) in enumerate(dataloader):
             image = image.cuda()
             mask = mask.cuda()
 
             batch_size = image.size(0)
+            count += batch_size
             out, _, _, _, _ = model(image)
 
-            dic, jsc = evaluate_error(out, mask)
-            errors['DIC'] = errors['DIC'] + dic
-            errors['JSC'] = errors['JSC'] + jsc
+            batch_errors = evaluate_error(out, mask)
+            logging.info('[%d/%d] DIC: %.10f, JSC: %.10f' % (i, len(dataloader), batch_errors['DIC']/batch_size, batch_errors['JSC']/batch_size))
+            errors['DIC'] = errors['DIC'] + batch_errors['DIC']
+            errors['JSC'] = errors['JSC'] + batch_errors['JSC']
         
-        errors['DIC'] = errors['DIC'] / len(dataloader)
-        errors['JSC'] = errors['JSC'] / len(dataloader)
+        errors['DIC'] = errors['DIC'] / count
+        errors['JSC'] = errors['JSC'] / count
 
-        message(self.config, 'DIC: %.4f, JSC: %.4f' % (errors['DIC'], errors['JSC'])) 
-
+        # message(self.config, 'DIC: %.4f, JSC: %.4f' % (errors['DIC'], errors['JSC'])) 
+        logging.info('DIC: %.7f, JSC: %.7f' % (errors['DIC'], errors['JSC']))
             
     def save_model(self, model, epoch):
         torch.save(model.state_dict(), '{}/model_{}.pth'.format(self.config.results_dir, epoch))

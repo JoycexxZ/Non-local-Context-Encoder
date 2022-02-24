@@ -23,6 +23,7 @@ if __name__ == "__main__":
 
     # Training settings
     parser.add_argument('--out_to_folder', type=str, default='False')
+    parser.add_argument('--model_path', type=str, default='')
 
     # Other params
     parser.add_argument('--lamb', type=float, default=0.25)

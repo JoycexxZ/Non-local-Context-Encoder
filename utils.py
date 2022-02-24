@@ -21,11 +21,12 @@ def line(config):
 
 def config_init(config):
     if config.model_path:
-        file_path, file_name = os.path.split(config.model_path)
+        file_path, filename = os.path.split(config.model_path)
+        filename, _ = os.path.splitext(filename)
         config.results_dir = file_path
-        config.log_path = os.path.join(config.results_dir, "out.debug.log")
+        config.log_path = os.path.join(config.results_dir, filename+"_test.log")
 
-    if config.out_to_folder == "True":
+    elif config.out_to_folder == "True":
         t = int(time.time())
         if 'results' not in os.listdir():
             os.mkdir('results')
@@ -33,9 +34,10 @@ def config_init(config):
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
         config.results_dir = results_dir
+        config.log_path = os.path.join(config.results_dir, "out.debug.log")
 
-    _print(config, config)
-    line(config)
+    # _print(config, config)
+    # line(config)
 
     return config
 
@@ -64,14 +66,30 @@ def show_out (image, name):
 def evaluate_error(out, target):
     errors = {'DIC': 0, 'JSC': 0}
 
-    out = out.cpu().numpy()
+    out = out.data.cpu().numpy()
     out = np.around(out[:, 1, ...])
     target = target.cpu().numpy()
 
-    tp = np.sum(out[out == target == 1], axis=(2, 3))
-    fp = np.sum(out[out == target == 0], axis=(2, 3))
-    tn = np.sum(out[out == 1] - tp, axis=(2, 3))
-    fn = np.sum(out[out == 0] - fp, axis=(2, 3))
+    true = np.zeros_like(out)
+    false = np.zeros_like(out)
+    tp = np.zeros_like(out)
+    tn = np.zeros_like(out)
+    fp = np.zeros_like(out)
+    fn = np.zeros_like(out)
+    
+    true[out == target] = 1
+    tp[true == out] = 1
+    fp[true != out] = 1
+    false[out != target] = 1
+    tn[true == out] = 1
+    fn[true != out] = 1
+
+    tp = np.sum(tp, axis=(1, 2))
+    tn = np.sum(tn, axis=(1, 2))
+    fp = np.sum(fp, axis=(1, 2))
+    fn = np.sum(fn, axis=(1, 2))
+
+    # print(tp, tn, fp, fn)
 
     errors['DIC'] = np.sum(2*tp / (2*tp + fn + fp))
     errors['JSC'] = np.sum((tp) / (tp + fp + fn))
