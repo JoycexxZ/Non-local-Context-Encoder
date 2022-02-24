@@ -2,6 +2,8 @@ import time
 import sys
 import os
 import matplotlib.pyplot as plt
+import torch
+import numpy as np
 
 def message(config, string, time_stamp=True):
     t = time.localtime()
@@ -53,3 +55,7 @@ def show_out (image, name):
         plt.imshow(image.reshape((256, 256)),cmap='gray')
         plt.savefig("out/" + name + '.png')
         plt.show()
+
+def evaluate_error(out, target, batch_size):
+    errors = {'DIC': 0, 'JSC': 0}
+    out = out.cpu().numpy()

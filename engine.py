@@ -70,6 +70,33 @@ class Engine():
                 break
 
         show_out(out, 'out')
+        
+    def test(self, model=None):
+        if not model:
+            model = Network_ResNet34()
+            self.config = config_init(self.config)
+            try:
+                model.load_state_dict(torch.load(self.config.model_path))
+            except:
+                raise("Cannot load model.")
 
+        if torch.cuda.device_count() == 8:
+            model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3, 4, 5, 6, 7]).cuda()
+        elif torch.cuda.device_count() == 4:
+            model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3]).cuda()
+        else:
+            model = model.cuda()
+
+        cudnn.benchmark = True
+
+        batch_size = self.config.batch_size
+        dataloader = get_testing_loader(self.config, batch_size, self.config.num_workers)
+
+        for i, (image, mask) in enumerate(dataloader):
+            image = image.cuda()
+            mask = mask.cuda()
+
+            out, _, _, _, _ = model(image)
+            
     def save_model(self, model, epoch):
         torch.save(model.state_dict(), '{}/model_{}.pth'.format(self.config.results_dir, epoch))
