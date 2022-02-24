@@ -1,6 +1,7 @@
 import time
 import sys
 import os
+import matplotlib.pyplot as plt
 
 def message(config, string, time_stamp=True):
     t = time.localtime()
@@ -40,3 +41,15 @@ def _print(config, message):
             sys.stdout = sys.stdout
 
     print(message, end='')
+
+def show_out (image, name):
+    image = image.data.cpu().numpy()[0]
+
+    if image.shape[0] == 2:
+        plt.imshow(image[1], cmap='gray')
+        plt.savefig(name+'.png')
+        plt.show()
+    else:
+        plt.imshow(image.reshape((256, 256)),cmap='gray')
+        plt.savefig("out/" + name + '.png')
+        plt.show()

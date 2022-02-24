@@ -47,15 +47,15 @@ class Network(nn.Module):
         self.bottle3 = self._make_bottleneck(32)
         self.bottle4 = self._make_bottleneck(16)
         self.bottle5 = self._make_bottleneck(8)
-        self.bottle = nn.Conv2d(4, 1, kernel_size=1)
+        self.bottle = nn.Conv2d(8, 2, kernel_size=1)
 
     def _make_bottleneck(self, size_in):
-        channels = [64, 32, 16, 1]
+        channels = [64, 32, 16, 2]
         layers = []
         s = size_in
         
-        for channel in channels:
-            layers.append(nn.Conv2d(channel*2, channel, kernel_size=1))
+        for i in range(len(channels)-1):
+            layers.append(nn.Conv2d(channels[i], channels[i+1], kernel_size=1))
             if s < 256:
                 layers.append(nn.Upsample(scale_factor=2, mode='bilinear'))
                 s //= 2
@@ -114,7 +114,12 @@ class Network(nn.Module):
         p2_s = self.bottle2(p2)
 
         out = self.bottle(torch.cat((p2_s, p3_s, p4_s, p5_s), 1))
-        out = self.bottle(out)
+
+        p2_s = F.softmax(p2_s, dim=1)
+        p3_s = F.softmax(p3_s, dim=1)
+        p4_s = F.softmax(p4_s, dim=1)
+        p5_s = F.softmax(p5_s, dim=1)
+        out = F.softmax(out, dim=1)
         
         return out, p2_s, p3_s, p4_s, p5_s
 

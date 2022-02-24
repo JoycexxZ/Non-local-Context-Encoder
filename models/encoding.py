@@ -113,8 +113,6 @@ class Encoding(Module):
                         (expanded_x - reshaped_codewords)).sum(dim=1)
         return encoded_feat
 
-
-
     def forward(self, X):
         # input X is a 4D tensor
         assert(X.size(1) == self.D)

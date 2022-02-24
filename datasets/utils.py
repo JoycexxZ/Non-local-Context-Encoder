@@ -24,6 +24,7 @@ def get_data_JPCL(data_path, mask_path, name):
     mask_left = np.array(Image.open(mask_left_path))
     mask_right = np.array(Image.open(mask_right_path))
     mask = np.minimum(mask_left + mask_right, 1)
+    #mask = mask_left + mask_right
 
     return image, mask
     

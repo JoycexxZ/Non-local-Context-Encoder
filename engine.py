@@ -12,11 +12,12 @@ class Engine():
     def __init__(self, config):
         self.config = config
 
-    def _adjust_learning_rate(self, optimizer):
+    def _adjust_learning_rate(self, optimizer, lr):
         if lr > 1e-4:
             lr -= lr * 0.1
             for param_group in optimizer.param_groups:
                 param_group['lr'] = lr
+        return lr
 
     def train(self):
         model = Network_ResNet34()
@@ -32,6 +33,7 @@ class Engine():
 
         cudnn.benchmark = True
 
+        lr = self.config.lr
         optimizer = torch.optim.Adam(model.parameters(), lr=self.config.lr,
                                      betas=(self.config.first_momentum, self.config.second_momentum),
                                      weight_decay=self.config.weight_decay)
@@ -44,23 +46,30 @@ class Engine():
                 image = image.cuda()
                 mask = mask.cuda()
 
+                #show_out(mask, 'mask')
+
                 optimizer.zero_grad()
 
                 out, p2_s, p3_s, p4_s, p5_s = model(image)
-                loss = loss(p2_s, p3_s, p4_s, p5_s, out, mask, self.config.lamb)
+                # print(mask.max(), mask.min())
+
+                loss = Loss(p2_s, p3_s, p4_s, p5_s, out, mask, self.config.lamb)
+                # print(loss)
 
                 loss.backward()
                 optimizer.step()
 
                 if i % 100 == 0:
-                    message(self.config, '[%d/%d] Loss: %.4f' % (i, len(dataloader), loss.item()))
+                    message(self.config, '[%d/%d] Loss: %.10f' % (i, len(dataloader), loss.item()))
 
-            self.adjust_learning_rate(optimizer)
-            line(self.config)
+            lr = self._adjust_learning_rate(optimizer, lr)
+            # line(self.config)
             if epoch % 20 == 0 and self.config.out_to_folder == 'True':
                 self.save_model(model, epoch)
             if epoch > self.config.epochs:
                 break
+
+        show_out(out, 'out')
 
     def save_model(self, model, epoch):
         torch.save(model.state_dict(), '{}/model_{}.pth'.format(self.config.results_dir, epoch))

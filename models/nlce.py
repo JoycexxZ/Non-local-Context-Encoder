@@ -19,7 +19,7 @@ class NLCE(nn.Module):
         self.conv1_g = nn.Conv2d(C_in, self.C, 1)
         self.conv2 = nn.Conv2d(self.C, C_in, 1)
         self.conv3 = nn.Conv2d(C_in, self.D, 1)
-        self.bn = nn.BatchNorm2d(self.D)
+        self.bn = nn.BatchNorm1d(self.D)
         self.fc = nn.Linear(self.D, C_in)
 
 
@@ -35,7 +35,7 @@ class NLCE(nn.Module):
         phi = phi.reshape((B, self.C, -1)).transpose(1, 2)
         g = g.reshape((B, self.C, -1))
 
-        f = F.softmax(torch.bmm(theta, phi))
+        f = F.softmax(torch.bmm(theta, phi), dim=1)
         y = torch.bmm(f, g)
 
         y = y.reshape(B, self.C, H, W)
@@ -45,14 +45,16 @@ class NLCE(nn.Module):
 
         
         e = self.encoder(z_)
+        e = e.reshape(B, self.D, -1)
         e = self.bn(e)
         e = F.relu(e)
-        E = e.sum(dim=1)
+        E = e.sum(dim=2)
 
         gamma = self.fc(E)
         gamma = F.sigmoid(gamma)
+        gamma = gamma.repeat(1, H * W).view(B, self.C_in, H, W)
 
-        return torch.mul(z, gamma)
+        return z * gamma
 
         
 
