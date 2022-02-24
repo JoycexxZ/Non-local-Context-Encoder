@@ -29,6 +29,7 @@ class GeneralDataset(Dataset):
             #mask = np.resize(mask, (1, 256, 256)).astype('float32')
             image = utils.reshape_image(image, self.config.image_size).reshape((1, self.config.image_size, self.config.image_size)).astype('float32')
             mask = utils.reshape_image(mask, self.config.image_size).reshape((self.config.image_size, self.config.image_size)).astype('int64')
+        
         elif self.dataset == "ISBI":
             image, mask = utils.get_data_ISBI(self.config.data_path, self.config.mask_path, name)
             if self.transform:

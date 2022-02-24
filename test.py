@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     # Testing settings
     parser.add_argument('--model_path', type=str, default='')
-    parser.add_argument('--out_to_folder', type=str, default='False')
+    parser.add_argument('--out_to_folder', type=str, default='True')
 
     config = parser.parse_args()
 
