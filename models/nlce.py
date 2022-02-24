@@ -19,6 +19,7 @@ class NLCE(nn.Module):
         self.conv1_g = nn.Conv2d(C_in, self.C, 1)
         self.conv2 = nn.Conv2d(self.C, C_in, 1)
         self.conv3 = nn.Conv2d(C_in, self.D, 1)
+        self.bn = nn.BatchNorm2d(self.D)
         self.fc = nn.Linear(self.D, C_in)
 
 
@@ -44,7 +45,7 @@ class NLCE(nn.Module):
 
         
         e = self.encoder(z_)
-        e = F.batch_norm(e)
+        e = self.bn(e)
         e = F.relu(e)
         E = e.sum(dim=1)
 
