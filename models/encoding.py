@@ -15,7 +15,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.nn.modules.utils import _pair
 
-from models.functions.encoder import scaled_l2, aggregate, pairwise_cosine
+#from models.functions.encoder import scaled_l2, aggregate, pairwise_cosine
 
 __all__ = ['Encoding', 'EncodingDrop', 'Inspiration', 'UpsampleConv2d',
            'EncodingCosine']
@@ -88,6 +88,33 @@ class Encoding(Module):
         self.codewords.data.uniform_(-std1, std1)
         self.scale.data.uniform_(-1, 0)
 
+    @staticmethod
+    def scaled_l2(X, codewords, scale):
+        num_codes, channels = codewords.size()
+        batch_size = X.size(0)
+        reshaped_scale = scale.view((1, 1, num_codes))
+        expanded_x = X.unsqueeze(2).expand(
+            (batch_size, X.size(1), num_codes, channels))
+        reshaped_codewords = codewords.view((1, 1, num_codes, channels))
+
+        scaled_l2_norm = reshaped_scale * (
+                         expanded_x - reshaped_codewords).pow(2).sum(dim=3)
+        return scaled_l2_norm
+
+    @staticmethod
+    def aggregate(assignment_weights, X, codewords):
+        num_codes, channels = codewords.size()
+        reshaped_codewords = codewords.view((1, 1, num_codes, channels))
+        batch_size = X.size(0)
+
+        expanded_x = X.unsqueeze(2).expand(
+            (batch_size, X.size(1), num_codes, channels))
+        encoded_feat = (assignment_weights.unsqueeze(3) *
+                        (expanded_x - reshaped_codewords)).sum(dim=1)
+        return encoded_feat
+
+
+
     def forward(self, X):
         # input X is a 4D tensor
         assert(X.size(1) == self.D)
@@ -101,9 +128,9 @@ class Encoding(Module):
         else:
             raise RuntimeError('Encoding Layer unknown input dims!')
         # assignment weights BxNxK
-        A = F.softmax(scaled_l2(X, self.codewords, self.scale), dim=2)
+        A = F.softmax(self.scaled_l2(X, self.codewords, self.scale), dim=2)
         # aggregate
-        E = aggregate(A, X, self.codewords)
+        E = self.aggregate(A, X, self.codewords)
         return E
 
     def __repr__(self):
