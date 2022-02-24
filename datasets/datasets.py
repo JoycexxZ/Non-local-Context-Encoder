@@ -48,7 +48,11 @@ def get_training_loader(config, batch_size, num_workers):
     return dataloader_train
 
 def get_testing_loader(config, batch_size, num_workers):
-    transformed_test = GeneralDataset(config, transforms = transforms.Compose([transforms.ToTensor()]))
+    transformed_test = GeneralDataset(config, transforms = transforms.Compose([
+                                            transforms.Resize(256),
+                                            transforms.CenterCrop(256),
+                                            transforms.ToTensor()
+                                            ]))
     dataloader_test = DataLoader(transformed_test, batch_size, shuffle=True, num_workers=num_workers)
 
     return dataloader_test
