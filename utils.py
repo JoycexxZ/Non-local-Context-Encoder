@@ -12,7 +12,7 @@ def message(config, string, time_stamp=True):
     else:
         prefix = " "*11
 
-    message = prefix + string + '\n'
+    message = prefix + string
 
     _print(config, message)
     
@@ -20,29 +20,34 @@ def line(config):
     _print(config, "-------------------------------------\n")
 
 def config_init(config):
+    if config.model_path:
+        file_path, file_name = os.path.split(config.model_path)
+        config.results_dir = file_path
+        config.log_path = os.path.join(config.results_dir, "out.debug.log")
+
     if config.out_to_folder == "True":
         t = int(time.time())
         if 'results' not in os.listdir():
             os.mkdir('results')
-        results_dir = os.path.join('results'+str(t))
+        results_dir = os.path.join('results', str(t))
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
         config.results_dir = results_dir
 
     _print(config, config)
-    _print(config, "\n")
     line(config)
 
     return config
 
 def _print(config, message):
     if config.out_to_folder == "True":
-        with open(config.results_dir+"/out.debug.log", "a+") as f:
+        with open(os.path.join(config.results_dir, "out.debug.log"), "a+") as f:
+            terminal = sys.stdout
             sys.stdout = f
-            print(message, end='')
-            sys.stdout = sys.stdout
+            print(message)
+            sys.stdout = terminal
 
-    print(message, end='')
+    print(message)
 
 def show_out (image, name):
     image = image.data.cpu().numpy()[0]
@@ -56,6 +61,19 @@ def show_out (image, name):
         plt.savefig("out/" + name + '.png')
         plt.show()
 
-def evaluate_error(out, target, batch_size):
+def evaluate_error(out, target):
     errors = {'DIC': 0, 'JSC': 0}
+
     out = out.cpu().numpy()
+    out = np.around(out[:, 1, ...])
+    target = target.cpu().numpy()
+
+    tp = np.sum(out[out == target == 1], axis=(2, 3))
+    fp = np.sum(out[out == target == 0], axis=(2, 3))
+    tn = np.sum(out[out == 1] - tp, axis=(2, 3))
+    fn = np.sum(out[out == 0] - fp, axis=(2, 3))
+
+    errors['DIC'] = np.sum(2*tp / (2*tp + fn + fp))
+    errors['JSC'] = np.sum((tp) / (tp + fp + fn))
+
+    return errors

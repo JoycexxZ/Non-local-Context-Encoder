@@ -32,3 +32,5 @@ _ReSharper*/
 packages/
 .idea/
 **/__pycache__/
+.VsCodeCounter/
+results/

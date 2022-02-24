@@ -1,3 +1,4 @@
+from distutils.log import error
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -20,7 +21,11 @@ class Engine():
         return lr
 
     def train(self):
-        model = Network_ResNet34()
+        if self.config.dataset == 'ISBI':
+            model = Network_channel3()
+        elif self.config.dataset == 'JPCL':
+            model = Network_channel1()
+
         print(model)
         self.config = config_init(self.config)
 
@@ -40,13 +45,11 @@ class Engine():
 
         dataloader = get_training_loader(self.config, self.config.batch_size, self.config.num_workers)
 
-        for epoch in range(self.config.epochs):
+        for epoch in range(1, self.config.epochs+1):
             message(self.config, 'starting epoch {}...'.format(epoch))
             for i, (image, mask) in enumerate(dataloader):
                 image = image.cuda()
                 mask = mask.cuda()
-
-                #show_out(mask, 'mask')
 
                 optimizer.zero_grad()
 
@@ -63,17 +66,17 @@ class Engine():
                     message(self.config, '[%d/%d] Loss: %.10f' % (i, len(dataloader), loss.item()))
 
             lr = self._adjust_learning_rate(optimizer, lr)
-            # line(self.config)
             if epoch % 20 == 0 and self.config.out_to_folder == 'True':
                 self.save_model(model, epoch)
-            if epoch > self.config.epochs:
-                break
-
-        show_out(out, 'out')
+        
+        # show_out(out, 'out')
         
     def test(self, model=None):
         if not model:
-            model = Network_ResNet34()
+            if self.config.dataset == 'ISBI':
+                model = Network_channel3()
+            elif self.config.dataset == 'JPCL':
+                model = Network_channel1()
             self.config = config_init(self.config)
             try:
                 model.load_state_dict(torch.load(self.config.model_path))
@@ -89,14 +92,26 @@ class Engine():
 
         cudnn.benchmark = True
 
-        batch_size = self.config.batch_size
-        dataloader = get_testing_loader(self.config, batch_size, self.config.num_workers)
+        dataloader = get_testing_loader(self.config, self.config.batch_size, self.config.num_workers)
 
+        message(self.config, 'starting testing...')
+        errors = {'DIC': 0, 'JSC': 0}
         for i, (image, mask) in enumerate(dataloader):
             image = image.cuda()
             mask = mask.cuda()
 
+            batch_size = image.size(0)
             out, _, _, _, _ = model(image)
+
+            dic, jsc = evaluate_error(out, mask)
+            errors['DIC'] = errors['DIC'] + dic
+            errors['JSC'] = errors['JSC'] + jsc
+        
+        errors['DIC'] = errors['DIC'] / len(dataloader)
+        errors['JSC'] = errors['JSC'] / len(dataloader)
+
+        message(self.config, 'DIC: %.4f, JSC: %.4f' % (errors['DIC'], errors['JSC'])) 
+
             
     def save_model(self, model, epoch):
         torch.save(model.state_dict(), '{}/model_{}.pth'.format(self.config.results_dir, epoch))

@@ -8,12 +8,12 @@ from models.resnet import Bottleneck, BasicBlock
 
 
 class Network(nn.Module):
-    def __init__(self, block, num_blocks):
+    def __init__(self, block, num_blocks, in_channels):
         super(Network, self).__init__()
         self.in_planes = 64
 
         # Process Conv1
-        self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(in_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -124,14 +124,8 @@ class Network(nn.Module):
         return out, p2_s, p3_s, p4_s, p5_s
 
 
-def Network_ResNet18():
-    return Network(BasicBlock, [2, 2, 2, 2])
+def Network_channel1():
+    return Network(BasicBlock, [3, 4, 6, 3], 1)
 
-def Network_ResNet34():
-    return Network(BasicBlock, [3, 4, 6, 3])
-
-def Network_ResNet50():
-    return Network(Bottleneck, [3, 4, 6, 3])
-
-def Network_ResNet101():
-    return Network(Bottleneck, [3, 4, 23, 3])
+def Network_channel3():
+    return Network(BasicBlock, [3, 4, 6, 3], 3)
