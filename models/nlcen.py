@@ -13,7 +13,7 @@ class Network(nn.Module):
         self.in_planes = 64
 
         # Process Conv1
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -25,22 +25,22 @@ class Network(nn.Module):
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
 
         # NLCE modules
-        self.nlce2 = NLCE(C_in=256)
-        self.nlce3 = NLCE(C_in=512)
-        self.nlce4 = NLCE(C_in=1024)
-        self.nlce5 = NLCE(C_in=2048)
+        self.nlce2 = NLCE(C_in=64)
+        self.nlce3 = NLCE(C_in=128)
+        self.nlce4 = NLCE(C_in=256)
+        self.nlce5 = NLCE(C_in=512)
 
         # Lateral layers
-        self.latlayer2 = nn.Conv2d( 256, 256, kernel_size=1, stride=1, padding=0)
-        self.latlayer3 = nn.Conv2d( 512, 256, kernel_size=1, stride=1, padding=0)
-        self.latlayer4 = nn.Conv2d(1024, 256, kernel_size=1, stride=1, padding=0)
-        self.latlayer5 = nn.Conv2d(2048, 256, kernel_size=1, stride=1, padding=0)
+        self.latlayer2 = nn.Conv2d( 64, 64, kernel_size=1, stride=1, padding=0)
+        self.latlayer3 = nn.Conv2d(128, 64, kernel_size=1, stride=1, padding=0)
+        self.latlayer4 = nn.Conv2d(256, 64, kernel_size=1, stride=1, padding=0)
+        self.latlayer5 = nn.Conv2d(512, 64, kernel_size=1, stride=1, padding=0)
 
         # Smooth layers
-        self.smooth2 = nn.Conv2d(256, 1, kernel_size=3, stride=1, padding=1)
-        self.smooth3 = nn.Conv2d(256, 1, kernel_size=3, stride=1, padding=1)
-        self.smooth4 = nn.Conv2d(256, 1, kernel_size=3, stride=1, padding=1)
-        self.smooth5 = nn.Conv2d(256, 1, kernel_size=3, stride=1, padding=1)
+        self.smooth2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
+        self.smooth3 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
+        self.smooth4 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
+        self.smooth5 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
 
         # Bottleneck operations
         self.bottle2 = self._make_bottleneck(64)
@@ -50,7 +50,7 @@ class Network(nn.Module):
         self.bottle = nn.Conv2d(4, 1, kernel_size=1)
 
     def _make_bottleneck(self, size_in):
-        channels = [128, 64, 32, 1]
+        channels = [64, 32, 16, 1]
         layers = []
         s = size_in
         
@@ -76,7 +76,7 @@ class Network(nn.Module):
 
         layers = []
         layers.append(block(self.in_planes, planes, stride, downsample))
-        self.inplanes = planes * block.expansion
+        self.in_planes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(block(self.in_planes, planes))
 

@@ -20,6 +20,7 @@ class Engine():
 
     def train(self):
         model = Network_ResNet34()
+        print(model)
         self.config = config_init(self.config)
 
         if torch.cuda.device_count() == 8:

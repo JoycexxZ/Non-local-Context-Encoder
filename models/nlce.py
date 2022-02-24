@@ -9,15 +9,15 @@ class NLCE(nn.Module):
         super(NLCE, self).__init__()
 
         self.C_in = C_in
-        self.C1 = C_in // 2
-        self.D = self.C1
+        self.C = C_in // 2
+        self.D = self.C
         self.K = self.D // 4
 
         self.encoder = Encoding(self.D, self.K)
-        self.conv1_theta = nn.Conv2d(C_in, self.C1, 1)
-        self.conv1_phi = nn.Conv2d(C_in, self.C1, 1)
-        self.conv1_g = nn.Conv2d(C_in, self.C1, 1)
-        self.conv2 = nn.Conv2d(self.C1, C_in, 1)
+        self.conv1_theta = nn.Conv2d(C_in, self.C, 1)
+        self.conv1_phi = nn.Conv2d(C_in, self.C, 1)
+        self.conv1_g = nn.Conv2d(C_in, self.C, 1)
+        self.conv2 = nn.Conv2d(self.C, C_in, 1)
         self.conv3 = nn.Conv2d(C_in, self.D, 1)
         self.fc = nn.Linear(self.D, C_in)
 
@@ -31,7 +31,7 @@ class NLCE(nn.Module):
         g = self.conv1_g(X)
 
         theta = theta.reshape((B, self.C, -1))
-        phi = phi.reshape((B, self.C, -1)).tranpose(1, 2)
+        phi = phi.reshape((B, self.C, -1)).transpose(1, 2)
         g = g.reshape((B, self.C, -1))
 
         f = F.softmax(torch.bmm(theta, phi))
