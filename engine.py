@@ -59,8 +59,10 @@ class Engine():
 
         dataloader = get_training_loader(self.config, self.config.batch_size, self.config.num_workers)
 
+        recent_loss = []
+
         for epoch in range(1, self.config.epochs+1):
-            logging.info('starting epoch {}...'.format(epoch))
+            # logging.info('starting epoch {}...'.format(epoch))
             # message(self.config, 'starting epoch {}...'.format(epoch))
             for i, (image, mask) in enumerate(dataloader):
                 image = image.cuda()
@@ -72,17 +74,23 @@ class Engine():
                 # print(mask.max(), mask.min())
 
                 loss = Loss(p2_s, p3_s, p4_s, p5_s, out, mask, self.config.lamb)
-                # print(loss)
-
+                
                 loss.backward()
                 optimizer.step()
 
                 if i % 100 == 0:
-                    logging.info('[%d/%d] Loss: %.10f' % (i, len(dataloader), loss.item()))
+                    logging.info('epoch %d - [%d/%d] Loss: %.10f' % (epoch, i, len(dataloader), loss.item()))
                     # message(self.config, '[%d/%d] Loss: %.10f' % (i, len(dataloader), loss.item()))
 
-            lr = self._adjust_learning_rate(optimizer, lr)
-            if epoch % 20 == 0 and self.config.out_to_folder == 'True':
+            recent_loss.append(loss.item())
+            if len(recent_loss) > 10:
+                recent_loss.pop(0)
+
+            if loss.item() > np.array(recent_loss).mean():
+                lr = self._adjust_learning_rate(optimizer, lr)
+                logging.info('adjust learning rate to {}'.format(lr))
+                    
+            if epoch % 100 == 0 and self.config.out_to_folder == 'True':
                 self.save_model(model, epoch)
         
         # show_out(out, 'out')
