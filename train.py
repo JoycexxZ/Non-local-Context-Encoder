@@ -1,6 +1,13 @@
 import argparse
-
 from engine import Engine
+
+'''
+    To Run the code:
+
+    python train.py --dataset JPCL --batch_size 4 --num_workers 1 --out_to_folder True
+'''
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

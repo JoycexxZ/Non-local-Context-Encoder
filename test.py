@@ -1,6 +1,11 @@
 import argparse
-
 from engine import Engine
+
+'''
+    To Run the code:
+
+    python test.py --dataset JPCL --batch_size 4 --num_workers 1 --model_path 'results/1645712917/model_20.pth'
+'''
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

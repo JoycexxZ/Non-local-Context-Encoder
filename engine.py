@@ -32,6 +32,7 @@ class Engine():
             lr -= lr * 0.1
             for param_group in optimizer.param_groups:
                 param_group['lr'] = lr
+            logging.info('adjust learning rate to {}'.format(lr))
         return lr
 
     def train(self):
@@ -88,7 +89,6 @@ class Engine():
 
             if loss.item() > np.array(recent_loss).mean():
                 lr = self._adjust_learning_rate(optimizer, lr)
-                logging.info('adjust learning rate to {}'.format(lr))
                     
             if epoch % 100 == 0 and self.config.out_to_folder == 'True':
                 self.save_model(model, epoch)
