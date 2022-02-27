@@ -122,6 +122,9 @@ class Engine():
         logging.info('starting testing...')
         errors = {'DIC': 0, 'JSC': 0}
         count = 0
+        img_list = []
+        gt_list = []
+        out_list = []
         for i, (image, mask) in enumerate(dataloader):
             image = image.cuda()
             mask = mask.cuda()
@@ -129,6 +132,12 @@ class Engine():
             batch_size = image.size(0)
             count += batch_size
             out, _, _, _, _ = model(image)
+
+            if len(img_list) < 4
+            for j in range(batch_size):
+                img_list.append(image[j, ...])
+                mask_list.append(mask[j, ...])
+                out_list.append(out[j, ...])
 
             batch_errors = evaluate_error(out, mask)
             logging.info('[%d/%d] DIC: %.10f, JSC: %.10f' % (i, len(dataloader), batch_errors['DIC']/batch_size, batch_errors['JSC']/batch_size))
@@ -140,6 +149,8 @@ class Engine():
 
         # message(self.config, 'DIC: %.4f, JSC: %.4f' % (errors['DIC'], errors['JSC'])) 
         logging.info('DIC: %.7f, JSC: %.7f' % (errors['DIC'], errors['JSC']))
+
+        
             
     def save_model(self, model, epoch):
         torch.save(model.state_dict(), '{}/model_{}.pth'.format(self.config.results_dir, epoch))
