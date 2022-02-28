@@ -133,11 +133,11 @@ class Engine():
             count += batch_size
             out, _, _, _, _ = model(image)
 
-            if len(img_list) < 4
-            for j in range(batch_size):
-                img_list.append(image[j, ...])
-                mask_list.append(mask[j, ...])
-                out_list.append(out[j, ...])
+            if len(img_list) < 4:
+                for j in range(batch_size):
+                    img_list.append(image[j, ...])
+                    gt_list.append(mask[j, ...])
+                    out_list.append(out[j, ...])
 
             batch_errors = evaluate_error(out, mask)
             logging.info('[%d/%d] DIC: %.10f, JSC: %.10f' % (i, len(dataloader), batch_errors['DIC']/batch_size, batch_errors['JSC']/batch_size))
@@ -149,7 +149,8 @@ class Engine():
 
         # message(self.config, 'DIC: %.4f, JSC: %.4f' % (errors['DIC'], errors['JSC'])) 
         logging.info('DIC: %.7f, JSC: %.7f' % (errors['DIC'], errors['JSC']))
-
+        filename, _ = os.path.splitext(self.config.log_path)
+        show_out_full(img_list, gt_list, out_list, filename+".png")
         
             
     def save_model(self, model, epoch):

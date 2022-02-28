@@ -25,6 +25,8 @@ def config_init(config):
         filename, _ = os.path.splitext(filename)
         config.results_dir = file_path
         config.log_path = os.path.join(config.results_dir, filename+"_test.log")
+        with open(config.log_path, "w") as f:
+            f.write("")
 
     elif config.out_to_folder == "True":
         t = int(time.time())
@@ -51,7 +53,7 @@ def _print(config, message):
 
     print(message)
 
-def show_out (image, name):
+def show_out(image, name):
     image = image.data.cpu().numpy()[0]
 
     if image.shape[0] == 2:
@@ -62,6 +64,23 @@ def show_out (image, name):
         plt.imshow(image.reshape((256, 256)),cmap='gray')
         plt.savefig("out/" + name + '.png')
         plt.show()
+
+def show_out_full(img_list, gt_list, out_list, path):
+    length = len(img_list)
+    
+    for i in range(length):
+        img = img_list[i].data.cpu().permute(1,2,0).squeeze().numpy()
+        gt = gt_list[i].data.cpu().numpy()
+        out = out_list[i][1].data.cpu().numpy()
+        plt.subplot(4, 3, i*3+1)
+        plt.imshow(img, cmap='gray')
+        plt.subplot(4, 3, i*3+2)
+        plt.imshow(gt, cmap='gray')
+        plt.subplot(4, 3, i*3+3)
+        plt.imshow(out, cmap='gray')
+    plt.tight_layout()
+    plt.savefig(path)
+    plt.show()
 
 def evaluate_error(out, target):
     errors = {'DIC': 0, 'JSC': 0}
