@@ -38,7 +38,7 @@ class GeneralDataset(Dataset):
                 image = self.transform(image)
                 random.seed(seed)
                 mask = self.transform(mask)
-                mask = mask.reshape((self.config.image_size, self.config.image_size))
+                mask = mask.reshape((self.config.image_size, self.config.image_size)).long()
 
         return image, mask
 

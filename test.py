@@ -4,7 +4,7 @@ from engine import Engine
 '''
     To Run the code:
 
-    python test.py --dataset JPCL --batch_size 4 --num_workers 1 --model_path 'results/1645712917/model_20.pth'
+    python test.py --dataset JPCL --batch_size 2 --num_workers 1 --model_path 'results/1646035137/model_50.pth'
 '''
 
 if __name__ == "__main__":
@@ -29,8 +29,8 @@ if __name__ == "__main__":
         config.data_path = 'datasets/ISBI/ISBI2016_ISIC_Part1_Test_Data/'
         config.mask_path = 'datasets/ISBI/ISBI2016_ISIC_Part1_Test_GroundTruth/'
     elif config.dataset == 'JPCL':
-        config.data_path = 'datasets/JPCL/images/'
-        config.mask_path = 'datasets/JPCL/masks/'
+        config.data_path = 'datasets/JPCL/fold2/images/'
+        config.mask_path = 'datasets/JPCL/fold2/masks/'
     else:
         raise ValueError('Dataset not supported')
 

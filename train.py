@@ -4,7 +4,7 @@ from engine import Engine
 '''
     To Run the code:
 
-    python train.py --dataset JPCL --batch_size 4 --num_workers 1 --out_to_folder True --epochs 300
+    python train.py --dataset ISBI --batch_size 2 --num_workers 1 --out_to_folder True --epochs 300 --out_per_epochs 20
 '''
 
 
@@ -31,6 +31,7 @@ if __name__ == "__main__":
     # Training settings
     parser.add_argument('--out_to_folder', type=str, default='False')
     parser.add_argument('--model_path', type=str, default='')
+    parser.add_argument('--out_per_epochs', type=int, default=100)
 
     # Other params
     parser.add_argument('--lamb', type=float, default=0.25)
@@ -41,8 +42,8 @@ if __name__ == "__main__":
         config.data_path = 'datasets/ISBI/ISBI2016_ISIC_Part1_Training_Data/'
         config.mask_path = 'datasets/ISBI/ISBI2016_ISIC_Part1_Training_GroundTruth/'
     elif config.dataset == 'JPCL':
-        config.data_path = 'datasets/JPCL/images/'
-        config.mask_path = 'datasets/JPCL/masks/'
+        config.data_path = 'datasets/JPCL/fold1/images/'
+        config.mask_path = 'datasets/JPCL/fold1/masks/'
     else:
         raise ValueError('Dataset not supported')
 

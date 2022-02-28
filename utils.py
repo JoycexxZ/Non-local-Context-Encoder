@@ -73,7 +73,10 @@ def show_out_full(img_list, gt_list, out_list, path):
         gt = gt_list[i].data.cpu().numpy()
         out = out_list[i][1].data.cpu().numpy()
         plt.subplot(4, 3, i*3+1)
-        plt.imshow(img, cmap='gray')
+        if len(img.shape) == 2:
+            plt.imshow(img, cmap='gray')
+        else:
+            plt.imshow(img)
         plt.subplot(4, 3, i*3+2)
         plt.imshow(gt, cmap='gray')
         plt.subplot(4, 3, i*3+3)

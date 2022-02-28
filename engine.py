@@ -15,15 +15,16 @@ class Engine():
         self.config = config_init(config)
         logger = logging.getLogger()
         logger.setLevel(logging.INFO)
-        fh = logging.FileHandler(config.log_path)
-        fh.setLevel(logging.INFO)
         ch = logging.StreamHandler()
         ch.setLevel(logging.INFO)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(filename)-8s: %(message)s',
                                       datefmt="[%Y-%m-%d %H:%M:%S]")
-        fh.setFormatter(formatter)
+        if config.out_to_folder == 'True':
+            fh = logging.FileHandler(config.log_path)
+            fh.setLevel(logging.INFO)
+            fh.setFormatter(formatter)
+            logger.addHandler(fh)
         ch.setFormatter(formatter)
-        logger.addHandler(fh)
         logger.addHandler(ch)
         logging.info('config: ' + str(config) + '\n')
 
@@ -90,7 +91,7 @@ class Engine():
             if loss.item() > np.array(recent_loss).mean():
                 lr = self._adjust_learning_rate(optimizer, lr)
                     
-            if epoch % 100 == 0 and self.config.out_to_folder == 'True':
+            if epoch % self.config.out_per_epochs == 0 and self.config.out_to_folder == 'True':
                 self.save_model(model, epoch)
         
         # show_out(out, 'out')
