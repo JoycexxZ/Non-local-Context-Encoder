@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: 当前文件",
+            "type": "python",
+            "request": "launch",
+            "program": "test.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--dataset", "JPCL",
+                "--batch_size", "2",
+                "--num_workers", "1",
+                "--model_path", "results/1645726819/model_100.pth",
+            ]
+        }
+    ]
+}

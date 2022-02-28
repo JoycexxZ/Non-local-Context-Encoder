@@ -4,7 +4,7 @@ from engine import Engine
 '''
     To Run the code:
 
-    python train.py --dataset JPCL --batch_size 4 --num_workers 1 --out_to_folder True --epochs 500
+    python train.py --dataset JPCL --batch_size 4 --num_workers 1 --out_to_folder True --epochs 300
 '''
 
 

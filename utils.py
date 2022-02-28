@@ -89,8 +89,8 @@ def evaluate_error(out, target):
     out = np.around(out[:, 1, ...])
     target = target.cpu().numpy()
 
-    true = np.zeros_like(out)
-    false = np.zeros_like(out)
+    true = np.full_like(out, 3)
+    false = np.full_like(out, 3)
     tp = np.zeros_like(out)
     tn = np.zeros_like(out)
     fp = np.zeros_like(out)
@@ -98,10 +98,12 @@ def evaluate_error(out, target):
     
     true[out == target] = 1
     tp[true == out] = 1
-    fp[true != out] = 1
-    false[out != target] = 1
+    true -= 1
     tn[true == out] = 1
-    fn[true != out] = 1
+
+    false[out != target] = 1
+    fn[false == out] = 1
+    fn[false == target] = 1
 
     tp = np.sum(tp, axis=(1, 2))
     tn = np.sum(tn, axis=(1, 2))

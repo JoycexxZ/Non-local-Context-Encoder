@@ -11,7 +11,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Datasets
-    parser.add_argument('--dataset', type=str, default='JPCL')
+    parser.add_argument('--dataset', type=str, default='ISBI')
     parser.add_argument('--image_size', type=int, default=256)
 
     # Testing params
@@ -26,8 +26,8 @@ if __name__ == "__main__":
     config = parser.parse_args()
 
     if config.dataset == 'ISBI':
-        config.data_path = 'datasets/ISBI/ISBI2016_ISIC_Part1_Training_Data/'
-        config.mask_path = 'datasets/ISBI/ISBI2016_ISIC_Part1_Training_GroundTruth/'
+        config.data_path = 'datasets/ISBI/ISBI2016_ISIC_Part1_Test_Data/'
+        config.mask_path = 'datasets/ISBI/ISBI2016_ISIC_Part1_Test_GroundTruth/'
     elif config.dataset == 'JPCL':
         config.data_path = 'datasets/JPCL/images/'
         config.mask_path = 'datasets/JPCL/masks/'
