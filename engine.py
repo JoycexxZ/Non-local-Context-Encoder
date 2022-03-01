@@ -17,7 +17,7 @@ class Engine():
         logger.setLevel(logging.INFO)
         ch = logging.StreamHandler()
         ch.setLevel(logging.INFO)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(filename)-8s: %(message)s',
+        formatter = logging.Formatter('%(asctime)s - %(filename)-8s: %(message)s',
                                       datefmt="[%Y-%m-%d %H:%M:%S]")
         if config.out_to_folder == 'True':
             fh = logging.FileHandler(config.log_path)
@@ -77,13 +77,13 @@ class Engine():
                 out, p2_s, p3_s, p4_s, p5_s = model(image)
                 # print(mask.max(), mask.min())
 
-                loss = Loss(p2_s, p3_s, p4_s, p5_s, out, mask, self.config.lamb)
+                loss, l2, l3, l4, l5, l_all = Loss(p2_s, p3_s, p4_s, p5_s, out, mask, self.config.lamb)
                 
                 loss.backward()
                 optimizer.step()
 
                 if i % 100 == 0:
-                    logging.info('epoch %d - [%d/%d] Loss: %.10f' % (epoch, i, len(dataloader), loss.item()))
+                    logging.info('epoch %d - [%d/%d] Loss: %.10f [%.4f, %.4f, %.4f, %.4f, %.4f]' % (epoch, i, len(dataloader), loss.item(), l2.item(), l3.item(), l4.item(), l5.item(), l_all.item()))
                     # message(self.config, '[%d/%d] Loss: %.10f' % (i, len(dataloader), loss.item()))
 
             recent_loss.append(loss.item())
