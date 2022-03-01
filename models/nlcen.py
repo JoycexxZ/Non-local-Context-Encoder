@@ -1,3 +1,4 @@
+from configparser import Interpolation
 from matplotlib.pyplot import axis
 import torch.nn as nn
 import torch
@@ -42,27 +43,34 @@ class Network(nn.Module):
         self.smooth4 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
         self.smooth5 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
 
-        # Bottleneck operations
-        self.bottle2 = self._make_bottleneck(64)
-        self.bottle3 = self._make_bottleneck(32)
-        self.bottle4 = self._make_bottleneck(16)
-        self.bottle5 = self._make_bottleneck(8)
-        self.bottle = nn.Conv2d(8, 2, kernel_size=1)
+        # To supervision
+        self.sup2 = self._make_bottleneck(2, False)
+        self.sup3 = self._make_bottleneck(2, False)
+        self.sup4 = self._make_bottleneck(2, False)
+        self.sup5 = self._make_bottleneck(2, False)
 
-    def _make_bottleneck(self, size_in):
-        channels = [64, 32, 16, 2]
+        # Bottleneck operations and concat
+        self.bottle3 = self._make_bottleneck(32, True)
+        self.bottle4 = self._make_bottleneck(16, True)
+        self.bottle5 = self._make_bottleneck(8, True)
+        self.bottle = nn.Sequential(
+                        nn.Conv2d(120, 60, kernel_size=1),
+                        nn.Upsample(scale_factor=2, mode='bilinear'),
+                        nn.Conv2d(60, 30, kernel_size=1),
+                        nn.Upsample(scale_factor=2, mode='bilinear'),
+                        nn.Conv2d(30, 2, kernel_size=1)
+        )
+
+    def _make_bottleneck(self, out_channel, upsample):
         layers = []
-        s = size_in
-        
-        for i in range(len(channels)-1):
-            layers.append(nn.Conv2d(channels[i], channels[i+1], kernel_size=1))
-            if s < 256:
+
+        c = 64
+        while c > out_channel:
+            layers.append(nn.Conv2d(c, c//2, kernel_size=1, stride=1, padding=0))
+            c = c // 2
+            if upsample:
                 layers.append(nn.Upsample(scale_factor=2, mode='bilinear'))
-                s //= 2
-        
-        if s < 256:
-            layers.append(nn.Upsample(size=(256, 256), mode='bilinear'))
-        
+
         return nn.Sequential(*layers)
 
     def _make_layer(self, block, planes, blocks, stride=1):
@@ -107,22 +115,21 @@ class Network(nn.Module):
         p3 = self.smooth3(self._upsample_add(p4, self.latlayer3(e3)))
         p2 = self.smooth2(self._upsample_add(p3, self.latlayer2(e2)))
 
-        # Bottleneck operations
-        p5_s = self.bottle5(p5)
-        p4_s = self.bottle4(p4)
-        p3_s = self.bottle3(p3)
-        p2_s = self.bottle2(p2)
+        # Supervision
+        s2 = F.softmax(self.sup2(p2), dim=1)
+        s3 = F.softmax(self.sup3(p3), dim=1)
+        s4 = F.softmax(self.sup4(p4), dim=1)
+        s5 = F.softmax(self.sup5(p5), dim=1)
 
-        out = self.bottle(torch.cat((p2_s, p3_s, p4_s, p5_s), 1))
+        # Bottleneck operations and concat
+        p5 = self.bottle5(p5)
+        p4 = self.bottle4(p4)
+        p3 = self.bottle3(p3)
 
-        p2_s = F.softmax(p2_s, dim=1)
-        p3_s = F.softmax(p3_s, dim=1)
-        p4_s = F.softmax(p4_s, dim=1)
-        p5_s = F.softmax(p5_s, dim=1)
+        out = self.bottle(torch.cat((p2, p3, p4, p5), 1))
         out = F.softmax(out, dim=1)
         
-        return out, p2_s, p3_s, p4_s, p5_s
-
+        return out, s2, s3, s4, s5
 
 def Network_channel1():
     return Network(BasicBlock, [3, 4, 6, 3], 1)

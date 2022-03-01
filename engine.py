@@ -77,7 +77,8 @@ class Engine():
                 out, p2_s, p3_s, p4_s, p5_s = model(image)
                 # print(mask.max(), mask.min())
 
-                loss, l2, l3, l4, l5, l_all = Loss(p2_s, p3_s, p4_s, p5_s, out, mask, self.config.lamb)
+                batch_size = image.size(0)
+                loss, l2, l3, l4, l5, l_all = Loss(p2_s, p3_s, p4_s, p5_s, out, mask, batch_size, self.config.lamb)
                 
                 loss.backward()
                 optimizer.step()
