@@ -54,7 +54,12 @@ def _print(config, message):
     print(message)
 
 def show_out(image, name):
-    image = image.data.cpu().numpy()[0]
+    o = image.data.cpu().numpy()
+    # out = np.around(out[:, 1, ...])
+    _, H, W = o.shape
+    out = np.zeros((H, W))
+    out[o[0] < o[1]] = 1
+    image = out
 
     if image.shape[0] == 2:
         plt.imshow(image[1], cmap='gray')
@@ -68,10 +73,17 @@ def show_out(image, name):
 def show_out_full(img_list, gt_list, out_list, path):
     length = len(img_list)
     
-    for i in range(length):
+    for i in range(4):
         img = img_list[i].data.cpu().permute(1,2,0).squeeze().numpy()
         gt = gt_list[i].data.cpu().numpy()
-        out = out_list[i][1].data.cpu().numpy()
+        # out = out_list[i][1].data.cpu().numpy()
+        
+        o = out_list[i].data.cpu().numpy()
+        # out = np.around(out[:, 1, ...])
+        _, H, W = o.shape
+        out = np.zeros((H, W))
+        out[o[0] < o[1]] = 1
+        
         plt.subplot(4, 3, i*3+1)
         if len(img.shape) == 2:
             plt.imshow(img, cmap='gray')
@@ -88,8 +100,11 @@ def show_out_full(img_list, gt_list, out_list, path):
 def evaluate_error(out, target):
     errors = {'DIC': 0, 'JSC': 0}
 
-    out = out.data.cpu().numpy()
-    out = np.around(out[:, 1, ...])
+    o = out.data.cpu().numpy()
+    # out = np.around(out[:, 1, ...])
+    N, _, H, W = o.shape
+    out = np.zeros((N, H, W))
+    out[o[:, 0] < o[:, 1]] = 1
     target = target.cpu().numpy()
 
     true = np.full_like(out, 3)

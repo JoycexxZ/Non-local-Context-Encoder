@@ -17,9 +17,12 @@ if __name__ == "__main__":
 
     config = parser.parse_args()
 
-    loader = get_training_loader(config, batch_size=8, num_workers=0)
+    loader = get_training_loader(config, batch_size=900, num_workers=0)
+    
+    data = next(iter(loader))
+    print(data[1].mean(dim = [0,2,3]), data[1].std(dim = [0,2,3]))
 
-    for i, (image, mask) in enumerate(loader):
-        print(image.shape, mask.shape, image.max(), mask.max())
-        if i > 10:
-            break
+    # for i, (image, mask) in enumerate(loader):
+    #     print(image.shape, mask.shape, image.max(), mask.max())
+    #     if i > 10:
+    #         break

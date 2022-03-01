@@ -105,20 +105,22 @@ class Engine():
                 model = Network_channel3()
             elif self.config.dataset == 'JPCL':
                 model = Network_channel1()
+            if torch.cuda.device_count() == 8:
+                model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3, 4, 5, 6, 7]).cuda()
+            elif torch.cuda.device_count() == 4:
+                model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3]).cuda()
+            elif torch.cuda.device_count() == 2:
+                model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
+            else:
+                model = model.cuda()
             self.config = config_init(self.config)
             try:
-                model.load_state_dict(torch.load(self.config.model_path))
+                model_dict = torch.load(self.config.model_path)
+                model_dict = {'module.'+key:value for key,value in model_dict.items()}
+                model.load_state_dict(model_dict)
             except:
                 raise("Cannot load model.")
 
-        if torch.cuda.device_count() == 8:
-            model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3, 4, 5, 6, 7]).cuda()
-        elif torch.cuda.device_count() == 4:
-            model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3]).cuda()
-        elif torch.cuda.device_count() == 2:
-            model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
-        else:
-            model = model.cuda()
 
         cudnn.benchmark = True
 

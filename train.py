@@ -4,7 +4,7 @@ from engine import Engine
 '''
     To Run the code:
 
-    python train.py --dataset ISBI --batch_size 2 --num_workers 1 --out_to_folder True --epochs 300 --out_per_epochs 20
+    python train.py --dataset ISBI --batch_size 8 --num_workers 2 --out_to_folder False --epochs 300 --out_per_epochs 20
 '''
 
 

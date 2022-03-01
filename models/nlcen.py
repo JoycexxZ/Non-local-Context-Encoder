@@ -116,10 +116,16 @@ class Network(nn.Module):
         p2 = self.smooth2(self._upsample_add(p3, self.latlayer2(e2)))
 
         # Supervision
-        s2 = F.softmax(self.sup2(p2), dim=1)
-        s3 = F.softmax(self.sup3(p3), dim=1)
-        s4 = F.softmax(self.sup4(p4), dim=1)
-        s5 = F.softmax(self.sup5(p5), dim=1)
+        # s2 = F.softmax(self.sup2(p2), dim=1)
+        # s3 = F.softmax(self.sup3(p3), dim=1)
+        # s4 = F.softmax(self.sup4(p4), dim=1)
+        # s5 = F.softmax(self.sup5(p5), dim=1)
+        
+        s2 = self.sup2(p2)
+        s3 = self.sup3(p3)
+        s4 = self.sup4(p4)
+        s5 = self.sup5(p5)
+        
 
         # Bottleneck operations and concat
         p5 = self.bottle5(p5)
@@ -127,7 +133,7 @@ class Network(nn.Module):
         p3 = self.bottle3(p3)
 
         out = self.bottle(torch.cat((p2, p3, p4, p5), 1))
-        out = F.softmax(out, dim=1)
+        #out = F.softmax(out, dim=1)
         
         return out, s2, s3, s4, s5
 
