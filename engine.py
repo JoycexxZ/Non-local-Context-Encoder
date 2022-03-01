@@ -49,6 +49,8 @@ class Engine():
             model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3, 4, 5, 6, 7]).cuda()
         elif torch.cuda.device_count() == 4:
             model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3]).cuda()
+        elif torch.cuda.device_count() == 2:
+            model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
         else:
             model = model.cuda()
 
@@ -112,6 +114,8 @@ class Engine():
             model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3, 4, 5, 6, 7]).cuda()
         elif torch.cuda.device_count() == 4:
             model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3]).cuda()
+        elif torch.cuda.device_count() == 2:
+            model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
         else:
             model = model.cuda()
 

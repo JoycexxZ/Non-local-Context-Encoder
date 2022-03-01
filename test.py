@@ -4,7 +4,7 @@ from engine import Engine
 '''
     To Run the code:
 
-    python test.py --dataset JPCL --batch_size 2 --num_workers 1 --model_path 'results/1646035137/model_50.pth'
+    python test.py --dataset ISBI --batch_size 2 --num_workers 1 --model_path 'results/1646037293/model_20.pth'
 '''
 
 if __name__ == "__main__":
