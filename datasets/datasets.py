@@ -7,15 +7,17 @@ import torch
 import random
 from datasets import utils
 from torchvision import transforms
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+from albumentations.augmentations.transforms import Normalize
 
 
 class GeneralDataset(Dataset):
-    def __init__(self, config, transforms_image=None, transforms_mask=None) -> None:
+    def __init__(self, config, transforms=None) -> None:
         super(GeneralDataset, self).__init__()
         self.config = config
         self.dataset = config.dataset
-        self.transform_image = transforms_image
-        self.transform_mask = transforms_mask        
+        self.transform = transforms
         self.filenames = utils.get_filenames(config.data_path)
 
     def __len__(self):
@@ -72,14 +74,10 @@ def get_training_loader(config, batch_size, num_workers):
 
 def get_testing_loader(config, batch_size, num_workers):
     transformed_test = GeneralDataset(config, transforms_image=transforms.Compose([
-                                            transforms.Resize(256),
-                                            transforms.CenterCrop(256),
-                                            transforms.ToTensor()
-                                            ]),
-                                      transforms_mask=transforms.Compose([
-                                            transforms.Resize(256),
-                                            transforms.CenterCrop(256),
-                                            transforms.ToTensor()]))
+                                            utils.Scale(256),
+                                            utils.CenterCrop([256,256], [256, 256]),
+                                            utils.ToTensor()
+                                            ]))
     dataloader_test = DataLoader(transformed_test, batch_size, shuffle=True, num_workers=num_workers)
 
     return dataloader_test

@@ -3,6 +3,8 @@ from torch.utils.data import DataLoader
 import argparse
 from utils import show_out_full
 
+from utils import show_out_full
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Datasets

@@ -8,6 +8,7 @@ from datasets.datasets import *
 from models.loss import *
 from utils import *
 import logging
+from torch.profiler import profile, record_function, ProfilerActivity
 
 
 class Engine():
@@ -53,6 +54,8 @@ class Engine():
             model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
         else:
             model = model.cuda()
+        
+        logging.info('Model loaded.')
 
         cudnn.benchmark = True
 
@@ -62,6 +65,7 @@ class Engine():
                                      weight_decay=self.config.weight_decay)
 
         dataloader = get_training_loader(self.config, self.config.batch_size, self.config.num_workers)
+        logging.info('Loader ready.')
 
         recent_loss = []
 
@@ -73,8 +77,16 @@ class Engine():
                 mask = mask.cuda()
 
                 optimizer.zero_grad()
+                
+                with profile(activities=[
+                        ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
+                    with record_function("model_inference"):
+                        out, p2_s, p3_s, p4_s, p5_s = model(image)
+                        
 
-                out, p2_s, p3_s, p4_s, p5_s = model(image)
+                # print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
+
+                # out, p2_s, p3_s, p4_s, p5_s = model(image)
                 # print(mask.max(), mask.min())
 
                 batch_size = image.size(0)
