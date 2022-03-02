@@ -7,6 +7,7 @@ import torch
 import random
 from datasets import utils
 from torchvision import transforms
+import albumentations as A
 
 
 class GeneralDataset(Dataset):
@@ -33,8 +34,8 @@ class GeneralDataset(Dataset):
         elif self.dataset == "ISBI":
             image, mask = utils.get_data_ISBI(self.config.data_path, self.config.mask_path, name)
             if self.transform:
-                sample = {'image': image, 'mask': mask}
-                sample = self.transform(sample)
+                sample = {'image': image, 'mask': mask} 
+                sample = self.transform()
                 image = sample['image']
                 mask = sample['mask'].reshape((self.config.image_size, self.config.image_size)).long()
 
@@ -44,16 +45,14 @@ class GeneralDataset(Dataset):
 def get_training_loader(config, batch_size, num_workers):
     image_stats = {'mean':[0.7331, 0.6158, 0.5599],
                    'std':[0.1522, 0.1724, 0.1930]}
-    transformed_train = GeneralDataset(config, transforms= transforms.Compose([
-                                            utils.RandomHorizontalFlip(),
-                                            utils.RandomVerticalFlip(),
-                                            utils.RandomRotate(10),
-                                            utils.Scale(256),
-                                            utils.CenterCrop([256, 256], [256, 256]),
-                                            utils.ToTensor(),
-                                            utils.Normalize(image_stats['mean'], image_stats['std'])
-                                            ])
-                                            )
+    transformed_train = GeneralDataset(config, transforms= A.Compose([
+                                            A.HorizontalFlip(p=0.5),
+                                            A.VerticalFlip(0.5),
+                                            A.ShiftScaleRotate(shift_limit=0, scale_limit=0, rotate_limit=10, p=0.5),
+                                            A.Resize(256, 256),
+                                            A.CenterCrop(256, 256),
+                                            A.pytorch.transforms.ToTensorV2(),
+                                            ]))
     
     dataloader_train = DataLoader(transformed_train, batch_size, shuffle=True, num_workers=num_workers)
     return dataloader_train
