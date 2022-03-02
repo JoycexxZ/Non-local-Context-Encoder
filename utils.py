@@ -78,21 +78,31 @@ def show_out_full(img_list, gt_list, out_list, path):
         gt = gt_list[i].data.cpu().numpy()
         # out = out_list[i][1].data.cpu().numpy()
         
-        o = out_list[i].data.cpu().numpy()
-        # out = np.around(out[:, 1, ...])
-        _, H, W = o.shape
-        out = np.zeros((H, W))
-        out[o[0] < o[1]] = 1
-        
-        plt.subplot(4, 3, i*3+1)
-        if len(img.shape) == 2:
-            plt.imshow(img, cmap='gray')
+        if out_list:
+            o = out_list[i].data.cpu().numpy()
+            # out = np.around(out[:, 1, ...])
+            _, H, W = o.shape
+            out = np.zeros((H, W))
+            out[o[0] < o[1]] = 1
+            
+            plt.subplot(4, 3, i*3+1)
+            if len(img.shape) == 2:
+                plt.imshow(img, cmap='gray')
+            else:
+                plt.imshow(img)
+            plt.subplot(4, 3, i*3+2)
+            plt.imshow(gt, cmap='gray')
+            plt.subplot(4, 3, i*3+3)
+            plt.imshow(out, cmap='gray')
         else:
-            plt.imshow(img)
-        plt.subplot(4, 3, i*3+2)
-        plt.imshow(gt, cmap='gray')
-        plt.subplot(4, 3, i*3+3)
-        plt.imshow(out, cmap='gray')
+            plt.subplot(4, 2, i*2+1)
+            if len(img.shape) == 2:
+                plt.imshow(img, cmap='gray')
+            else:
+                plt.imshow(img)
+            plt.subplot(4, 2, i*2+2)
+            plt.imshow(gt, cmap='gray')
+
     plt.tight_layout()
     plt.savefig(path)
     plt.show()

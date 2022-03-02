@@ -4,8 +4,8 @@
 - [X] train&test on 2 datasets
 - [X] split jpcl train/test dataset
 - [ ] adversarial attack
-- [ ] modify network structures
-- [ ] data prepocessing
+- [X] modify network structures
+- [X] data prepocessing
 - [ ] tensorboard?
 
 ## issues:

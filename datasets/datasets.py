@@ -10,12 +10,11 @@ from torchvision import transforms
 
 
 class GeneralDataset(Dataset):
-    def __init__(self, config, transforms_image=None, transforms_mask=None) -> None:
+    def __init__(self, config, transforms=None) -> None:
         super(GeneralDataset, self).__init__()
         self.config = config
         self.dataset = config.dataset
-        self.transform_image = transforms_image
-        self.transform_mask = transforms_mask        
+        self.transform = transforms
         self.filenames = utils.get_filenames(config.data_path)
 
     def __len__(self):
@@ -33,13 +32,11 @@ class GeneralDataset(Dataset):
         
         elif self.dataset == "ISBI":
             image, mask = utils.get_data_ISBI(self.config.data_path, self.config.mask_path, name)
-            if self.transform_image:
-                seed = np.random.randint(1145141449)
-                random.seed(seed)
-                image = self.transform_image(image)
-                random.seed(seed)
-                mask = self.transform_mask(mask)
-                mask = mask.reshape((self.config.image_size, self.config.image_size)).long()
+            if self.transform:
+                sample = {'image': image, 'mask': mask}
+                sample = self.transform(sample)
+                image = sample['image']
+                mask = sample['mask'].reshape((self.config.image_size, self.config.image_size)).long()
 
         return image, mask
 
@@ -47,38 +44,26 @@ class GeneralDataset(Dataset):
 def get_training_loader(config, batch_size, num_workers):
     image_stats = {'mean':[0.7331, 0.6158, 0.5599],
                    'std':[0.1522, 0.1724, 0.1930]}
-    transformed_train = GeneralDataset(config, transforms_image= transforms.Compose([
-                                            transforms.Resize(256),
-                                            transforms.CenterCrop(256),
-                                            transforms.RandomHorizontalFlip(),
-                                            transforms.RandomVerticalFlip(),
-                                            transforms.RandomRotation(10),
-                                            transforms.ToTensor(),
-                                            transforms.Normalize(image_stats['mean'],
-                                                      image_stats['std'])
-                                            ]),
-                                        transforms_mask=transforms.Compose([
-                                            transforms.Resize(256),
-                                            transforms.CenterCrop(256),
-                                            transforms.RandomHorizontalFlip(),
-                                            transforms.RandomVerticalFlip(),
-                                            transforms.RandomRotation(10),
-                                            transforms.ToTensor()
-                                            ]))
+    transformed_train = GeneralDataset(config, transforms= transforms.Compose([
+                                            utils.RandomHorizontalFlip(),
+                                            utils.RandomVerticalFlip(),
+                                            utils.RandomRotate(10),
+                                            utils.Scale(256),
+                                            utils.CenterCrop([256, 256], [256, 256]),
+                                            utils.ToTensor(),
+                                            utils.Normalize(image_stats['mean'], image_stats['std'])
+                                            ])
+                                            )
     
     dataloader_train = DataLoader(transformed_train, batch_size, shuffle=True, num_workers=num_workers)
     return dataloader_train
 
 def get_testing_loader(config, batch_size, num_workers):
     transformed_test = GeneralDataset(config, transforms_image=transforms.Compose([
-                                            transforms.Resize(256),
-                                            transforms.CenterCrop(256),
-                                            transforms.ToTensor()
-                                            ]),
-                                      transforms_mask=transforms.Compose([
-                                            transforms.Resize(256),
-                                            transforms.CenterCrop(256),
-                                            transforms.ToTensor()]))
+                                            utils.Scale(256),
+                                            utils.CenterCrop([256,256], [256, 256]),
+                                            utils.ToTensor()
+                                            ]))
     dataloader_test = DataLoader(transformed_test, batch_size, shuffle=True, num_workers=num_workers)
 
     return dataloader_test
