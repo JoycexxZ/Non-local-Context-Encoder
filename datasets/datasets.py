@@ -36,8 +36,10 @@ class GeneralDataset(Dataset):
             if self.transform_image:
                 seed = np.random.randint(1145141449)
                 random.seed(seed)
+                torch.manual_seed(seed)
                 image = self.transform_image(image)
                 random.seed(seed)
+                torch.manual_seed(seed)
                 mask = self.transform_mask(mask)
                 mask = mask.reshape((self.config.image_size, self.config.image_size)).long()
 
@@ -54,8 +56,7 @@ def get_training_loader(config, batch_size, num_workers):
                                             transforms.RandomVerticalFlip(),
                                             transforms.RandomRotation(10),
                                             transforms.ToTensor(),
-                                            transforms.Normalize(image_stats['mean'],
-                                                      image_stats['std'])
+                                            # transforms.Normalize(image_stats['mean'],image_stats['std'])
                                             ]),
                                         transforms_mask=transforms.Compose([
                                             transforms.Resize(256),

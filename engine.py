@@ -116,7 +116,7 @@ class Engine():
             self.config = config_init(self.config)
             try:
                 model_dict = torch.load(self.config.model_path)
-                model_dict = {'module.'+key:value for key,value in model_dict.items()}
+                # model_dict = {'module.'+key:value for key,value in model_dict.items()}
                 model.load_state_dict(model_dict)
             except:
                 raise("Cannot load model.")
