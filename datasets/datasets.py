@@ -8,6 +8,8 @@ import random
 from datasets import utils
 from torchvision import transforms
 import albumentations as A
+from albumentations.pytorch import ToTensorV2
+from albumentations.augmentations.transforms import Normalize
 
 
 class GeneralDataset(Dataset):
@@ -35,7 +37,7 @@ class GeneralDataset(Dataset):
             image, mask = utils.get_data_ISBI(self.config.data_path, self.config.mask_path, name)
             if self.transform:
                 sample = {'image': image, 'mask': mask} 
-                sample = self.transform()
+                sample = self.transform(image=image, mask=mask)
                 image = sample['image']
                 mask = sample['mask'].reshape((self.config.image_size, self.config.image_size)).long()
 
@@ -51,7 +53,8 @@ def get_training_loader(config, batch_size, num_workers):
                                             A.ShiftScaleRotate(shift_limit=0, scale_limit=0, rotate_limit=10, p=0.5),
                                             A.Resize(256, 256),
                                             A.CenterCrop(256, 256),
-                                            A.pytorch.transforms.ToTensorV2(),
+                                            Normalize(mean=image_stats['mean'], std=image_stats['std']),
+                                            ToTensorV2(),
                                             ]))
     
     dataloader_train = DataLoader(transformed_train, batch_size, shuffle=True, num_workers=num_workers)
