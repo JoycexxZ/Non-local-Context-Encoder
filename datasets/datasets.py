@@ -1,23 +1,18 @@
-#from random import random
-#from cv2 import transform
-#from sklearn.ensemble import GradientBoostingClassifier
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import torch
 import random
 from datasets import utils
 from torchvision import transforms
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
-from albumentations.augmentations.transforms import Normalize
 
 
 class GeneralDataset(Dataset):
-    def __init__(self, config, transforms=None) -> None:
+    def __init__(self, config, transforms_image=None, transforms_mask=None) -> None:
         super(GeneralDataset, self).__init__()
         self.config = config
         self.dataset = config.dataset
-        self.transform = transforms
+        self.transform_image = transforms_image
+        self.transform_mask = transforms_mask        
         self.filenames = utils.get_filenames(config.data_path)
 
     def __len__(self):
@@ -45,7 +40,7 @@ class GeneralDataset(Dataset):
                 mask = self.transform_mask(mask)
                 mask = mask.reshape((self.config.image_size, self.config.image_size)).long()
 
-        return image, mask
+        return image, mask, name
 
 
 def get_training_loader(config, batch_size, num_workers):
@@ -74,10 +69,14 @@ def get_training_loader(config, batch_size, num_workers):
 
 def get_testing_loader(config, batch_size, num_workers):
     transformed_test = GeneralDataset(config, transforms_image=transforms.Compose([
-                                            utils.Scale(256),
-                                            utils.CenterCrop([256,256], [256, 256]),
-                                            utils.ToTensor()
-                                            ]))
+                                            transforms.Resize(256),
+                                            transforms.CenterCrop(256),
+                                            transforms.ToTensor()
+                                            ]),
+                                      transforms_mask=transforms.Compose([
+                                            transforms.Resize(256),
+                                            transforms.CenterCrop(256),
+                                            transforms.ToTensor()]))
     dataloader_test = DataLoader(transformed_test, batch_size, shuffle=True, num_workers=num_workers)
 
     return dataloader_test

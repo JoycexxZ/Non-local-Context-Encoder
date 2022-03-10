@@ -4,6 +4,8 @@ import os
 import matplotlib.pyplot as plt
 import torch
 import numpy as np
+import cv2
+from PIL import Image
 
 def message(config, string, time_stamp=True):
     t = time.localtime()
@@ -144,3 +146,9 @@ def evaluate_error(out, target):
     errors['JSC'] = np.sum((tp) / (tp + fp + fn))
 
     return errors
+
+
+def save_adversarial_imgs(x_adv, names, root):
+    for i in range(len(names)):
+        img = Image.fromarray(x_adv[i].data.cpu().numpy().transpose(1, 2, 0))
+        img = img.save(os.path.join(root, names[i]+'_adv.png'))

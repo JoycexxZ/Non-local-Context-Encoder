@@ -29,15 +29,7 @@ if __name__ == "__main__":
     gt_list = []
     out_list = []
     
-    for i, (image, mask) in enumerate(loader):
-        batch_size = image.size(0)
-        print(image.min(),image.max())
-        
-        if len(img_list) < 4:
-                for j in range(batch_size):
-                    img_list.append(image[j, ...])
-                    gt_list.append(mask[j, ...])
-        else:
+    for i, (image, mask, name) in enumerate(loader):
+        print(name)
+        if i > 3:
             break
-
-    show_out_full(img_list, gt_list, None, "test_dataset.png")

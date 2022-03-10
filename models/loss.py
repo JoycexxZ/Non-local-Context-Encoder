@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import cv2
 
-def Loss(p2, p3, p4, p5, out, y, batch_size, lamb=0.25):
+def Loss(p2, p3, p4, p5, out, y, lamb=0.25):
     l_all = F.cross_entropy(out, y)
     
     N, H, W = y.size()
