@@ -4,7 +4,7 @@ from engine import Engine
 '''
     To Run the code:
 
-    python train.py --dataset ISBI --batch_size 8 --num_workers 2 --out_to_folder False --epochs 300 --out_per_epochs 20
+    python train.py --dataset JPCL --batch_size 8 --num_workers 2 --out_to_folder False --epochs 300 --out_per_epochs 20
 '''
 
 
@@ -35,6 +35,8 @@ if __name__ == "__main__":
 
     # Other params
     parser.add_argument('--lamb', type=float, default=0.25)
+    parser.add_argument('--use_adv', type=float, default=0)
+
 
     config = parser.parse_args()
 

@@ -22,11 +22,14 @@ def line(config):
     _print(config, "-------------------------------------\n")
 
 def config_init(config):
-    if config.model_path:
+    if config.model_path and config.out_to_folder == 'True':
         file_path, filename = os.path.split(config.model_path)
         filename, _ = os.path.splitext(filename)
         config.results_dir = file_path
-        config.log_path = os.path.join(config.results_dir, filename+"_test.log")
+        if config.use_adv > 0:
+            config.log_path = os.path.join(config.results_dir, filename+f"_test_adv{config.use_adv}.log")
+        else:
+            config.log_path = os.path.join(config.results_dir, filename+"_test.log")
         with open(config.log_path, "w") as f:
             f.write("")
 
@@ -73,6 +76,8 @@ def show_out(image, name):
         plt.show()
 
 def show_out_full(img_list, gt_list, out_list, path):
+    image_stats = {'mean':[0.7331, 0.6158, 0.5599],
+                   'std':[0.1522, 0.1724, 0.1930]}
     length = len(img_list)
     
     for i in range(4):
@@ -91,6 +96,7 @@ def show_out_full(img_list, gt_list, out_list, path):
             if len(img.shape) == 2:
                 plt.imshow(img, cmap='gray')
             else:
+                img = img * image_stats['std'] + image_stats['mean']
                 plt.imshow(img)
             plt.subplot(4, 3, i*3+2)
             plt.imshow(gt, cmap='gray')
@@ -149,6 +155,14 @@ def evaluate_error(out, target):
 
 
 def save_adversarial_imgs(x_adv, names, root):
+    # print(x_adv.size())
+    image_stats = {'mean':[0.7331, 0.6158, 0.5599],
+                   'std':[0.1522, 0.1724, 0.1930]}
+    
     for i in range(len(names)):
-        img = Image.fromarray(x_adv[i].data.cpu().numpy().transpose(1, 2, 0))
-        img = img.save(os.path.join(root, names[i]+'_adv.png'))
+        img = x_adv[i].data.cpu().permute(1,2,0).squeeze().numpy()
+        if len(img.shape) == 3:
+            img = img * image_stats['std'] + image_stats['mean']
+        img = np.clip(img, 0, 1)
+        img = Image.fromarray(np.uint8(img*255))
+        img = img.save(os.path.join(root, names[i]+'.png'))

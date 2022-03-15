@@ -14,13 +14,22 @@ def get_filenames(path):
             names.append(fname)
     return names
 
-def get_data_JPCL(data_path, mask_path, name):
-    data_path = os.path.join(data_path, name+".IMG")
-    shape = (2048, 2048, 1)
+def get_data_JPCL(data_path, mask_path, name, use_adv):
+    if use_adv:
+        data_path = os.path.join(data_path, name+".png")
+    else:
+        data_path = os.path.join(data_path, name+".IMG")
     dtype = np.dtype('>u2') 
-    fid = open(data_path, 'rb')
-    data = np.fromfile(fid, dtype)
-    image = data.reshape(shape)
+    if use_adv > 0:
+        shape = (256, 256, 1)
+        data = Image.open(data_path)
+        data = np.array(data, dtype=dtype)
+        image = data.reshape(shape)
+    else:
+        shape = (2048, 2048, 1)
+        fid = open(data_path, 'rb')
+        data = np.fromfile(fid, dtype)
+        image = data.reshape(shape)
 
     mask_left_path = os.path.join(mask_path, "left lung", name+".gif")
     mask_right_path = os.path.join(mask_path, "right lung", name+".gif")
@@ -31,8 +40,11 @@ def get_data_JPCL(data_path, mask_path, name):
 
     return image, mask
     
-def get_data_ISBI(data_path, mask_path, name):
-    data_path = os.path.join(data_path, name+".jpg")
+def get_data_ISBI(data_path, mask_path, name, use_adv):
+    if use_adv:
+        data_path = os.path.join(data_path, name+".png")
+    else:  
+        data_path = os.path.join(data_path, name+".jpg")
     image = Image.open(data_path)
     mask_path = os.path.join(mask_path, name+"_Segmentation.png")
     mask = Image.open(mask_path)

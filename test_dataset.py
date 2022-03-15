@@ -30,6 +30,6 @@ if __name__ == "__main__":
     out_list = []
     
     for i, (image, mask, name) in enumerate(loader):
-        print(name)
+        print(image.max(), image.min())
         if i > 3:
             break

@@ -129,11 +129,11 @@ class Engine():
             self.config = config_init(self.config)
             try:
                 model_dict = torch.load(self.config.model_path)
-                # model_dict = {'module.'+key:value for key,value in model_dict.items()}
+                model_dict = {'module.'+key:value for key,value in model_dict.items()}
                 model.load_state_dict(model_dict)
+                model.eval()
             except:
                 raise("Cannot load model.")
-
 
         cudnn.benchmark = True
 
@@ -190,11 +190,14 @@ class Engine():
                 model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3]).cuda()
             elif torch.cuda.device_count() == 2:
                 model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
-            else:
-                model = model.cuda()
+            # else:
+                # model = model.cuda()
             self.config = config_init(self.config)
             try:
-                model_dict = torch.load(self.config.model_path)
+                model_dict = torch.load(self.config.model_path, map_location='cpu')
+                model_dict = {'module.'+key:value for key,value in model_dict.items()}
+                # model_dict = {key[7:]:value for key,value in model_dict.items()}
+                
                 model.load_state_dict(model_dict)
             except:
                 raise("Cannot load model.")
@@ -202,16 +205,20 @@ class Engine():
         cudnn.benchmark = True
         model.eval()
 
-        dataloader = get_training_loader(self.config, self.config.batch_size, self.config.num_workers)
+        dataloader = get_testing_loader(self.config, self.config.batch_size, self.config.num_workers)
 
         iteration = int(min(eps+4, ceil(1.25*eps)))
 
+        logging.info("Start generate adversarial samples...")
         for i, (image, mask, name) in enumerate(dataloader):
             image = image.cuda()
             mask = mask.cuda()
             mask = 1 - mask
 
-            x_adv = image
+            # x_adv = torch.tensor(image)
+            # x_adv.requires_grad_(True)
+            
+            x_adv = image.clone().detach().requires_grad_(True)
 
             for _ in range(iteration):
                 out, p2_s, p3_s, p4_s, p5_s = model(x_adv)
@@ -222,9 +229,10 @@ class Engine():
                 loss.backward()
 
                 x_adv.grad.sign_()
-                x_adv = x_adv - self.config.alpha*x_adv.grad
-                x_adv = torch.where(x_adv > image+eps, image+eps, x_adv)
-                x_adv = torch.where(x_adv < image-eps, image-eps, x_adv)
+                x_adv = x_adv - self.config.alpha * x_adv.grad
+                x_adv = torch.where(x_adv > image+eps/255, image+eps/255, x_adv)
+                x_adv = torch.where(x_adv < image-eps/255, image-eps/255, x_adv)
                 x_adv = torch.clamp(x_adv, 0, 1)
+                x_adv = x_adv.clone().detach().requires_grad_(True)         
             
             save_adversarial_imgs(x_adv, name, adversary_dir)
